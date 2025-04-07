@@ -1,19 +1,36 @@
+const express = require('express');
 const { ApolloServer } = require('@apollo/server');
-const { startStandaloneServer } = require('@apollo/server/standalone');
+const { expressMiddleware } = require('@apollo/server/express4');
+const cors = require('cors');
 const mongoose = require('mongoose');
 
 const graphqlSchema = require('./graphql/graphqlSchema');
 
-// Start Apollo Server
+// Create Express app
+const app = express();
+
+// Start Apollo Server with Express
 async function startServer() {
-  await mongoose.connect('mongodb+srv://phantomoffkanagawa:JYU41Jx1NY3Zpvru@graduatecluster.xsi7q3m.mongodb.net/?retryWrites=true&w=majority&appName=GraduateCluster');
+    await mongoose.connect('mongodb+srv://phantomoffkanagawa:JYU41Jx1NY3Zpvru@graduatecluster.xsi7q3m.mongodb.net/?retryWrites=true&w=majority&appName=GraduateCluster');
 
-  const server = new ApolloServer({ schema: graphqlSchema });
-  const { url } = await startStandaloneServer(server, {
-    listen: { port: 4000 },
-  });
+    const server = new ApolloServer({
+        schema: graphqlSchema
+    });
 
-  console.log(`🚀 Server ready at ${url}`);
+    // Start the Apollo Server
+    await server.start();
+
+    // Apply middleware
+    app.use(cors());
+    app.use(express.json());
+    
+    // Apply Apollo middleware
+    app.use('/graphql', expressMiddleware(server));
+
+    // Start Express server
+    app.listen(4000, () => {
+        console.log('🚀 Server ready at http://localhost:4000/graphql');
+    });
 }
 
 startServer();
