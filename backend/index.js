@@ -11,7 +11,7 @@ const app = express();
 
 // Start Apollo Server with Express
 async function startServer() {
-    await mongoose.connect('mongodb+srv://phantomoffkanagawa:JYU41Jx1NY3Zpvru@graduatecluster.xsi7q3m.mongodb.net/?retryWrites=true&w=majority&appName=GraduateCluster');
+    await mongoose.connect('');
 
     const server = new ApolloServer({
         schema: graphqlSchema

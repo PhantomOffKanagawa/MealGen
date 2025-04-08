@@ -1,11 +1,9 @@
 const { composeMongoose } = require('graphql-compose-mongoose');
 const customOptions = require('../customOptions');
-const User = require('../../models/UserModel');
+const User = require('../../mongodb/UserModel');
 
 // Convert Mongoose model to GraphQL TypeComposer
-console.log('User model:', User);
-const UserTC = composeMongoose(User, {});
-// const UserTC = composeMongoose(User, customOptions);
+const UserTC = composeMongoose(User, customOptions);
 
 
 // Define custom queries
@@ -38,7 +36,6 @@ const UserMutations = {
     userRemoveOne: UserTC.mongooseResolvers.removeOne(),
     userRemoveMany: UserTC.mongooseResolvers.removeMany(),
   };
-console.log('User Resolvers', UserTC.getResolvers());
 
 module.exports = {
     UserTC,
