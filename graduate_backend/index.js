@@ -8,7 +8,7 @@ const cookieParser = require('cookie-parser');
 
 const graphqlSchema = require('./graphql/graphqlSchema');
 
-const { mongodb_url, jwt_secret } = require('./utils/env');``
+const { mongodb_url, jwt_secret, node_env } = require('./utils/env');``
 
 // Create Express app
 const app = express();
@@ -35,6 +35,13 @@ const authenticateUser = async (req) => {
     const decoded = jwt.verify(token, jwt_secret);
     return decoded;
   } catch (error) {
+    // If development, allow apollo playground to work without token
+    if (node_env === 'development') {
+        const devToken = req.headers['x-dev-token'];
+        if (devToken) {
+            return { id: 'dev', role: 'admin' }; // Allow access to dev user
+        }
+    }
     console.error('JWT verification error:', error.message);
     return null;
   }
@@ -47,6 +54,7 @@ async function startServer() {
 
     const server = new ApolloServer({
         schema: graphqlSchema,
+        introspection: true,
         formatError: (formattedError) => {
             // Custom error formatting
             return {
@@ -68,8 +76,7 @@ async function startServer() {
     app.use(express.json());
     app.use(cookieParser());
     
-    // Health check endpoint
-    app.get('/health', (req, res) => {
+    app.get('/health', (_, res) => {
         res.status(200).json({ status: 'ok' });
     });
     
