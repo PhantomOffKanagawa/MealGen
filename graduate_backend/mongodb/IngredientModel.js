@@ -1,11 +1,15 @@
 const mongoose = require('mongoose');
 
 const IngredientSchema = new mongoose.Schema({
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+    },
     name: {
         type: String,
         required: true,
         trim: true,
-        unique: true,
         index: true,
     },
     quantity: {
@@ -31,18 +35,18 @@ const IngredientSchema = new mongoose.Schema({
             max: 500,
             required: true
         },
+        carbs: {
+            type: Number,
+            min: 0,
+            max: 500,
+            required: true
+        },
         fat: {
             type: Number,
             min: 0,
             max: 500,
             required: true
         },
-        carbs: {
-            type: Number,
-            min: 0,
-            max: 500,
-            required: true
-        }
     },
     price: {
         type: Number,
@@ -50,6 +54,7 @@ const IngredientSchema = new mongoose.Schema({
     },
 });
 
+IngredientSchema.index({ userId: 1, name: 1 }, { unique: true });
 
 const Ingredient = mongoose.model('Ingredient', IngredientSchema);
 module.exports = Ingredient;

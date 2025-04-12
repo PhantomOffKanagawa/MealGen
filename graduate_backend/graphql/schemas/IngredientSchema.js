@@ -24,6 +24,12 @@ const IngredientQueries = {
     ingredientConnection: IngredientTC.mongooseResolvers.connection(),
     ingredientPagination: IngredientTC.mongooseResolvers.pagination(),
 
+    ingredientByUserId: IngredientTC.mongooseResolvers.findMany({
+        filter: {
+            userId: 'String!'
+        },
+        filterTypeNameFix: true
+    }),
 };
 
 
