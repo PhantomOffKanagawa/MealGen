@@ -124,6 +124,8 @@ export const register = async (
  * @returns A promise that resolves to the current user's data, or null if an error occurs.
  */
 export const getCurrentUser = async (): Promise<User | null> => {
+  if (!isAuthenticated()) return null; // Check if the user is authenticated before fetching data
+
   try {
     const data: { me: User } = await graphqlClient.request(ME_QUERY);
     return data.me;
