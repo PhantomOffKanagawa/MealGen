@@ -44,8 +44,9 @@ export function Column({children, id, index, title, type, onTitleChange, onDelet
     index,
     type: 'column',
     collisionPriority: CollisionPriority.Low,
-    accept: getAcceptedItemTypes(),
-    disabled: isFixedStore,
+    // accept: getAcceptedItemTypes(),
+    accept: ['ingredient', 'meal', 'column', 'item'],
+    // disabled: isFixedStore,
     handle: isFixedStore ? undefined : null
   });
 
