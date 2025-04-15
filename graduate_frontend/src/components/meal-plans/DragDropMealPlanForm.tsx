@@ -18,6 +18,7 @@ import {
   Divider,
   IconButton
 } from '@mui/material';
+import NutritionTracker from '@/components/dnd/NutritionTracker';
 import CloseIcon from '@mui/icons-material/Close';
 import SaveIcon from '@mui/icons-material/Save';
 import AddIcon from '@mui/icons-material/Add';
@@ -120,6 +121,18 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
   // Flag to track dialog opening to prevent multiple initializations
   const [previouslyOpen, setPreviouslyOpen] = useState(false);
   
+  // Track item quantities for meal plan items
+  const [itemQuantities, setItemQuantities] = useState<{[itemId: string]: number}>({});
+  
+  // Track total nutrition for display in the summary
+  const [totalNutrition, setTotalNutrition] = useState({
+    calories: 0,
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+    price: 0
+  });
+  
   // Initialize form with meal plan data when opened
   useEffect(() => {
     // Only run this effect when the dialog opens (from closed to open)
@@ -187,17 +200,37 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
     setPreviouslyOpen(open);
     
   }, [open, currentMealPlan, defaultColumns, defaultItems, initialized]);
+  
+  // Recalculate nutrition whenever items or quantities change
+  useEffect(() => {
+    if (initialized) {
+      calculateTotalNutrition();
+    }
+  }, [items, itemQuantities, mealPlanOrder]);
 
+  // Handle quantity changes for items
+  const handleQuantityChange = (itemId: string, quantity: number) => {
+    setItemQuantities(prev => ({
+      ...prev,
+      [itemId]: quantity
+    }));
+    
+    // Recalculate nutrition after quantity change
+    calculateTotalNutrition();
+  };
+  
   // Calculate total calories and macros for a group
   const calculateGroupNutrition = (groupId: string) => {
     return items[groupId]?.reduce((total, itemId) => {
       const item = itemsData[itemId];
+      const quantity = itemQuantities[itemId] || 1;
+      
       if (item) {
         return {
-          calories: total.calories + (item.macros?.calories || 0),
-          protein: total.protein + (item.macros?.protein || 0),
-          carbs: total.carbs + (item.macros?.carbs || 0),
-          fat: total.fat + (item.macros?.fat || 0)
+          calories: total.calories + ((item.macros?.calories || 0) * quantity),
+          protein: total.protein + ((item.macros?.protein || 0) * quantity),
+          carbs: total.carbs + ((item.macros?.carbs || 0) * quantity),
+          fat: total.fat + ((item.macros?.fat || 0) * quantity)
         };
       }
       return total;
@@ -208,8 +241,35 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
   const calculateGroupPrice = (groupId: string) => {
     return items[groupId]?.reduce((total, itemId) => {
       const item = itemsData[itemId];
-      return total + (item?.price || 0);
+      const quantity = itemQuantities[itemId] || 1;
+      return total + ((item?.price || 0) * quantity);
     }, 0) || 0;
+  };
+  
+  // Calculate total nutrition for all meal plan groups
+  const calculateTotalNutrition = () => {
+    let totalCalories = 0;
+    let totalProtein = 0;
+    let totalCarbs = 0;
+    let totalFat = 0;
+    let totalPrice = 0;
+    
+    mealPlanOrder.forEach(groupId => {
+      const nutrition = calculateGroupNutrition(groupId);
+      totalCalories += nutrition.calories;
+      totalProtein += nutrition.protein;
+      totalCarbs += nutrition.carbs;
+      totalFat += nutrition.fat;
+      totalPrice += calculateGroupPrice(groupId);
+    });
+    
+    setTotalNutrition({
+      calories: totalCalories,
+      protein: totalProtein,
+      carbs: totalCarbs,
+      fat: totalFat,
+      price: totalPrice
+    });
   };
 
   // Format column title with nutritional info
@@ -309,7 +369,7 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
           updatedItems.push({
             type: item.type,
             itemId: itemId,
-            quantity: 1, // Default quantity
+            quantity: itemQuantities[itemId] || 1, // Use tracked quantity or default to 1
             group: groupName
           });
         }
@@ -319,30 +379,14 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
     // Update meal plan items
     currentMealPlan.items = updatedItems;
     
-    // Calculate overall macros and price
-    let totalCalories = 0;
-    let totalProtein = 0;
-    let totalCarbs = 0;
-    let totalFat = 0;
-    let totalPrice = 0;
-    
-    mealPlanOrder.forEach(groupId => {
-      const nutrition = calculateGroupNutrition(groupId);
-      totalCalories += nutrition.calories;
-      totalProtein += nutrition.protein;
-      totalCarbs += nutrition.carbs;
-      totalFat += nutrition.fat;
-      totalPrice += calculateGroupPrice(groupId);
-    });
-    
-    // Update meal plan macros and price
+    // Use the already calculated nutrition values from our tracker
     currentMealPlan.macros = {
-      calories: totalCalories,
-      protein: totalProtein,
-      carbs: totalCarbs,
-      fat: totalFat
+      calories: totalNutrition.calories,
+      protein: totalNutrition.protein,
+      carbs: totalNutrition.carbs,
+      fat: totalNutrition.fat
     };
-    currentMealPlan.price = totalPrice;
+    currentMealPlan.price = totalNutrition.price;
     
     // Call the parent onSubmit to save the meal plan
     onSubmit();
@@ -400,8 +444,11 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
           variant="outlined"
           value={mealPlanName}
           onChange={(e) => setMealPlanName(e.target.value)}
-          sx={{ mb: 4 }}
+          sx={{ mb: 2 }}
         />
+        
+        {/* Nutrition Tracker Summary */}
+        <NutritionTracker nutrition={totalNutrition} />
 
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
@@ -467,6 +514,8 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
                           name={itemData.name}
                           type={itemData.type}
                           calories={itemData.macros?.calories}
+                          quantity={itemQuantities[id] || 1}
+                          onQuantityChange={handleQuantityChange}
                         />
                       ) : null;
                     })}
@@ -505,6 +554,8 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
                           name={itemData.name}
                           type={itemData.type}
                           calories={itemData.macros?.calories}
+                          quantity={itemQuantities[id] || 1}
+                          onQuantityChange={handleQuantityChange}
                         />
                       ) : null;
                     })}
