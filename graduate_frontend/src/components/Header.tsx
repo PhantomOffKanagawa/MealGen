@@ -85,6 +85,19 @@ export default function Header() {
                                 >
                                     Meals
                                 </Button>
+                                <Button
+                                    component={Link}
+                                    href="/meal-plans"
+                                    sx={{ 
+                                        color: 'text.primary',
+                                        fontWeight: isActive('/meal-plans') ? 'bold' : 'normal',
+                                        borderBottom: isActive('/meal-plans') ? '2px solid' : 'none',
+                                        borderRadius: 0,
+                                        '&:hover': { backgroundColor: 'transparent', borderBottom: '2px solid' }
+                                    }}
+                                >
+                                    Meal Plans
+                                </Button>
                             </>
                         )}
                     </Box>
