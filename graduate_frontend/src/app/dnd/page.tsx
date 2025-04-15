@@ -3,8 +3,8 @@
 import React, { useState } from 'react';
 import { DragDropProvider } from '@dnd-kit/react';
 import { move } from '@dnd-kit/helpers';
-import { Column } from '@/components/Column';
-import { Item } from '@/components/Item';
+import { Column } from '@/components/dnd/Column';
+import { Item } from '@/components/dnd/Item';
 import { Typography, Container, Box, AppBar, Toolbar, Button, IconButton, Tooltip } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import AddIcon from '@mui/icons-material/Add';
@@ -250,10 +250,10 @@ export default function App() {
             if (source && source.type === 'column') {
               // Only allow reordering non-fixed columns
               const columnId = source.id;
-              if (!columns[columnId]?.isFixed) {
+              // if (!columns[columnId]?.isFixed) {
                 setMealPlanOrder((order) => move(order, event));
                 return;
-              }
+              // }
               return;
             }
             

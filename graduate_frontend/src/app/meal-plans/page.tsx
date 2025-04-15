@@ -30,8 +30,8 @@ import { getAllMeals, Meal } from '../../services/mealService';
 import MealPlanTable from '../../components/meal-plans/MealPlanTable';
 import DeleteConfirmationDialog from '../../components/meal-plans/DeleteConfirmationDialog';
 import NotificationSnackbar from '../../components/meal-plans/NotificationSnackbar';
-import DragDropMealPlanForm from '../../components/meal-plans/DragDropMealPlanForm';
 import MealPlanForm from '@/components/meal-plans/MealPlanForm';
+import DragDropMealPlanForm from '@/components/meal-plans/DragDropMealPlanForm';
 
 /** Default meal plan structure for creating new plans */
 const defaultMealPlan: MealPlan = {
@@ -474,56 +474,17 @@ const MealPlansPage: React.FC = () => {
           onEdit={handleOpenForm}
           onDelete={handleOpenDeleteDialog}
         />
-        
-
-        {/* Create/Edit Meal Plan Form Dialog with Drag and Drop */}
-        {/* <DragDropMealPlanForm
-          open={openForm}
-          isEditing={isEditing}
-          loading={loading && pageLoading}
-          mealPlanName={currentMealPlan.name}
-          ingredients={ingredients}
-          meals={meals}
-          currentMealPlanItems={currentMealPlan.items}
-          macros={currentMealPlan.macros}
-          price={currentMealPlan.price}
-          onNameChange={handleChange}
-          onClose={handleCloseForm}
-          onSave={handleSubmit}
-          onItemsChange={(items) => {
-            // When items change via drag and drop, update the meal plan
-            const updatedMacrosAndPrice = calculateMacrosAndPrice(items);
-            setCurrentMealPlan({
-              ...currentMealPlan,
-              items: items,
-              ...updatedMacrosAndPrice
-            });
-          }}
-        /> */}
-
-        {/* Create/Edit Meal Plan Form Dialog */}
-        <MealPlanForm
+            {/* Create/Edit Meal Plan Form Dialog */}
+        <DragDropMealPlanForm
           open={openForm}
           isEditing={isEditing}
           loading={loading && pageLoading}
           currentMealPlan={currentMealPlan}
-          currentItem={currentItem}
-          tabValue={tabValue}
           ingredients={ingredients}
           meals={meals}
-          availableGroups={availableGroups}
-          newGroup={newGroup}
           onClose={handleCloseForm}
           onSubmit={handleSubmit}
           onMealPlanChange={handleChange}
-          onItemChange={handleItemChange}
-          onTabChange={handleTabChange}
-          onAddItem={handleAddItem}
-          onRemoveItem={handleRemoveItem}
-          onUpdateItemQuantity={handleUpdateItemQuantity}
-          onNewGroupChange={(e) => setNewGroup(e.target.value)}
-          onAddGroup={handleAddGroup}
-          getItemName={getItemName}
         />
 
         {/* Delete Confirmation Dialog */}
