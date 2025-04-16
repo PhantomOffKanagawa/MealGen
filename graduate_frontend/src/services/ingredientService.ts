@@ -1,4 +1,5 @@
-import { gql } from "graphql-request";
+import { ApolloClient, NormalizedCacheObject } from "@apollo/client";
+import { useMutation, gql, useQuery, useSubscription } from "@apollo/client";
 
 // Types
 export interface Ingredient {
@@ -79,10 +80,33 @@ const DELETE_INGREDIENT_MUTATION = gql`
   }
 `;
 
-export const getAllIngredients = async (graphqlClient: any, user: any) => {
+// GraphQL subscription to listen for new ingredients
+export const INGREDIENT_ADDED = gql`
+  subscription IngredientAdded {
+    ingredientAdded {
+      userId
+      name
+      quantity
+      unit
+      macros {
+        calories
+        protein
+        carbs
+        fat
+      }
+      price
+      _id
+    }
+  }
+`;
+
+export const getAllIngredients = async (graphqlClient: ApolloClient<NormalizedCacheObject>, user: any) => {
   try {
-    const data = await graphqlClient.request(GET_ALL_INGREDIENTS_QUERY, {
-      filter: { userId: user?._id || '' },
+    const { data } = await graphqlClient.query({
+      query: GET_ALL_INGREDIENTS_QUERY,
+      variables: {
+        filter: { userId: user?._id || '' },
+      },
     });
     return data.ingredientByUserId;
   } catch (error) {

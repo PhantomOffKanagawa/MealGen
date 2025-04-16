@@ -13,13 +13,15 @@ import {
   createIngredient, 
   updateIngredient, 
   deleteIngredient,
-  Ingredient 
+  Ingredient,
+  INGREDIENT_ADDED
 } from '../../services/ingredientService';
 import { useAuth } from '../../context/AuthContext';
 import PageHeader from '@/components/PageHeader';
 import DataTable from '@/components/DataTable';
 import { Column } from '@/components/DataTable';
 import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog';
+import { useSubscription } from '@apollo/client';
 
 // Fix for hydration issues - load these components only on client side
 const ClientSnackbar = dynamic(() => Promise.resolve(Snackbar), { ssr: false });
@@ -138,6 +140,16 @@ const IngredientsPage: React.FC = () => {
       });
     }
   };
+
+  // Use the Apollo Client instance explicitly for the subscription
+  const { data: subscriptionData } = useSubscription(INGREDIENT_ADDED, { client: graphqlClient });
+
+  useEffect(() => {
+    if (subscriptionData && subscriptionData.ingredientAdded) {
+      console.log('New ingredient added via subscription:', subscriptionData.ingredientAdded);
+      // fetchIngredients(); // or update the state accordingly
+    }
+  }, [subscriptionData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
