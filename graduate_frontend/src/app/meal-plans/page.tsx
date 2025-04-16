@@ -9,13 +9,12 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { 
-  Container, Typography, Box, Button, CircularProgress,
-  Paper, useTheme, alpha
+  Container, Box, CircularProgress, Snackbar, Alert,
+  useTheme, alpha, Typography, Card, CardContent, Grid
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
-import { useAuth } from '../../context/AuthContext';
 import graphqlClient from '../../services/graphql';
 import { 
   getAllMealPlans, 
@@ -27,13 +26,19 @@ import {
 } from '../../services/mealPlanService';
 import { getAllIngredients, Ingredient } from '../../services/ingredientService';
 import { getAllMeals, Meal } from '../../services/mealService';
-
-// Import the component files we created
-import MealPlanTable from '../../components/meal-plans/MealPlanTable';
-import DeleteConfirmationDialog from '../../components/meal-plans/DeleteConfirmationDialog';
-import NotificationSnackbar from '../../components/meal-plans/NotificationSnackbar';
-import MealPlanForm from '@/components/meal-plans/MealPlanForm';
+import { useAuth } from '../../context/AuthContext';
+import PageHeader from '@/components/PageHeader';
+import DataTable from '@/components/DataTable';
+import { Column } from '@/components/DataTable';
+import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog';
 import DragDropMealPlanForm from '@/components/dnd/DragDropMealPlanForm';
+
+// Fix for hydration issues - load these components only on client side
+const ClientSnackbar = dynamic(() => Promise.resolve(Snackbar), { ssr: false });
+const MealPlanEditDialog = dynamic(
+  () => import('@/components/meal-plans/MealPlanEditDialog'), 
+  { ssr: false }
+);
 
 /** Default meal plan structure for creating new plans */
 const defaultMealPlan: MealPlan = {
@@ -50,13 +55,6 @@ const defaultMealPlan: MealPlan = {
   price: 0
 };
 
-/**
- * MealPlansPage Component
- * 
- * Main container component for the meal plans feature.
- * Manages state and data fetching for all child components.
- * Features a modern neon UI design with glow effects.
- */
 const MealPlansPage: React.FC = () => {
   const { user, loading } = useAuth();
   const theme = useTheme();
@@ -73,17 +71,7 @@ const MealPlansPage: React.FC = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [currentMealPlan, setCurrentMealPlan] = useState<MealPlan>(defaultMealPlan);
   const [isEditing, setIsEditing] = useState(false);
-  const [tabValue, setTabValue] = useState(0);
-  
-  // State for adding new items to a meal plan
-  const [currentItem, setCurrentItem] = useState<MealPlanItem>({
-    type: 'ingredient',
-    itemId: '',
-    quantity: 1,
-    group: 'General'
-  });
   const [availableGroups, setAvailableGroups] = useState<string[]>(['General']);
-  const [newGroup, setNewGroup] = useState('');
   
   // Notification state
   const [snackbar, setSnackbar] = useState({
@@ -142,10 +130,6 @@ const MealPlansPage: React.FC = () => {
     }
   };
 
-  /**
-   * Opens the meal plan form dialog
-   * If a meal plan is provided, enters edit mode; otherwise, create mode
-   */
   const handleOpenForm = (mealPlan?: MealPlan) => {
     if (mealPlan) {
       setCurrentMealPlan(mealPlan);
@@ -173,100 +157,23 @@ const MealPlansPage: React.FC = () => {
     setOpenDeleteDialog(false);
   };
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-  };
-
-  /**
-   * Adds an item (ingredient or meal) to the current meal plan
-   * Validates the selection and updates macros and price
-   */
-  const handleAddItem = (type: "meal" | "ingredient") => {
-    // Update the current item type
-    setCurrentItem({
-      ...currentItem,
-      type: type,
-    });
-
-    // Validate item selection
-    if (!currentItem.itemId) {
-      setSnackbar({
-        open: true,
-        message: 'Please select an item to add',
-        severity: 'error'
-      });
-      return;
-    }
-
-    // Check if the item already exists in the meal plan
-    const itemExists = currentMealPlan.items.some(
-      item => item.type === currentItem.type && item.itemId === currentItem.itemId
-    );
-
-    if (itemExists) {
-      setSnackbar({
-        open: true,
-        message: `This ${currentItem.type} is already in your meal plan`,
-        severity: 'error'
-      });
-      return;
-    }
-
-    // Add the new item to the meal plan
-    const updatedItems = [...currentMealPlan.items, currentItem];
-    
-    // Calculate updated macros and price
-    const updatedMacrosAndPrice = calculateMacrosAndPrice(updatedItems);
-    
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
     setCurrentMealPlan({
       ...currentMealPlan,
-      items: updatedItems,
-      ...updatedMacrosAndPrice
-    });
-
-    // Reset the current item form
-    setCurrentItem({
-      type: 'ingredient',
-      itemId: '',
-      quantity: 1,
-      group: 'General'
+      [name]: value
     });
   };
 
   /**
-   * Removes an item from the current meal plan
-   * Recalculates macros and price afterward
+   * Updates the meal plan with a new set of items and recalculates nutrition
    */
-  const handleRemoveItem = (index: number) => {
-    const updatedItems = [...currentMealPlan.items];
-    updatedItems.splice(index, 1);
-    
-    // Calculate updated macros and price
-    const updatedMacrosAndPrice = calculateMacrosAndPrice(updatedItems);
+  const handleUpdateItems = (items: MealPlanItem[]) => {
+    const updatedMacrosAndPrice = calculateMacrosAndPrice(items);
     
     setCurrentMealPlan({
       ...currentMealPlan,
-      items: updatedItems,
-      ...updatedMacrosAndPrice
-    });
-  };
-
-  /**
-   * Updates the quantity of an item in the current meal plan
-   * Recalculates macros and price afterward
-   */
-  const handleUpdateItemQuantity = (itemIndex: number, newQuantity: number) => {
-    const updatedItems = [...currentMealPlan.items];
-    updatedItems[itemIndex] = {
-      ...updatedItems[itemIndex],
-      quantity: newQuantity
-    };
-    
-    const updatedMacrosAndPrice = calculateMacrosAndPrice(updatedItems);
-    
-    setCurrentMealPlan({
-      ...currentMealPlan,
-      items: updatedItems,
+      items: items,
       ...updatedMacrosAndPrice
     });
   };
@@ -305,47 +212,14 @@ const MealPlansPage: React.FC = () => {
   };
 
   /**
-   * Adds a new group to the available groups list
-   * Updates the current item to use the new group
+   * Adds a new group to the available groups
    */
-  const handleAddGroup = () => {
+  const handleAddGroup = (newGroup: string) => {
     if (newGroup && !availableGroups.includes(newGroup)) {
       setAvailableGroups([...availableGroups, newGroup]);
-      setCurrentItem({...currentItem, group: newGroup});
-      setNewGroup('');
+      return true;
     }
-  };
-
-  /**
-   * Handles changes to the meal plan name field
-   */
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setCurrentMealPlan({
-      ...currentMealPlan,
-      [name]: value
-    });
-  };
-
-  /**
-   * Handles changes to the current item form fields
-   */
-  const handleItemChange = (e: React.ChangeEvent<{ name?: string; value: unknown }>) => {
-    const { name, value } = e.target;
-    if (name) {
-      // Parse quantity to number to avoid GraphQL type errors
-      if (name === 'quantity') {
-        setCurrentItem({
-          ...currentItem,
-          [name]: parseFloat(value as string) || 0
-        });
-      } else {
-        setCurrentItem({
-          ...currentItem,
-          [name]: value
-        });
-      }
-    }
+    return false;
   };
 
   /**
@@ -443,6 +317,45 @@ const MealPlansPage: React.FC = () => {
     }
   };
 
+  // Define table columns with unique ids
+  const columns: Column[] = [
+    { 
+      id: 'name', 
+      label: 'Name',
+      format: (value) => <span style={{ fontWeight: 'medium' }}>{value}</span>
+    },
+    { 
+      id: 'items', 
+      label: 'Items',
+      format: (value) => value.length
+    },
+    { 
+      id: 'macros.calories', 
+      label: 'Calories',
+      format: (value, row) => <span style={{ color: theme.palette.error.main }}>{row.macros.calories.toFixed(0)}</span>
+    },
+    { 
+      id: 'macros.protein', 
+      label: 'Protein (g)',
+      format: (value, row) => <span style={{ color: theme.palette.info.main }}>{row.macros.protein.toFixed(1)}</span>
+    },
+    { 
+      id: 'macros.carbs', 
+      label: 'Carbs (g)',
+      format: (value, row) => <span style={{ color: theme.palette.warning.main }}>{row.macros.carbs.toFixed(1)}</span>
+    },
+    { 
+      id: 'macros.fat', 
+      label: 'Fat (g)',
+      format: (value, row) => <span style={{ color: '#FFA726' }}>{row.macros.fat.toFixed(1)}</span>
+    },
+    { 
+      id: 'price', 
+      label: 'Price',
+      format: (value) => <span style={{ color: theme.palette.success.main, fontWeight: 'medium' }}>${value.toFixed(2)}</span>
+    }
+  ];
+
   if (!isMounted) {
     return (
       <Container>
@@ -451,151 +364,131 @@ const MealPlansPage: React.FC = () => {
         </Box>
       </Container>
     );
-  }  return (
-    <Container maxWidth="lg">      <Box 
-        sx={{ 
-          my: 4,
-          position: 'relative',
-          minHeight: '80vh',
-          '&::before': {
-            content: '""',
-            position: 'fixed',
-            inset: 0,
-            background: 'radial-gradient(circle at 50% 30%, rgba(25, 118, 210, 0.08), transparent 70%), radial-gradient(circle at 80% 80%, rgba(66, 66, 255, 0.05), transparent 50%)',
-            pointerEvents: 'none',
-            zIndex: -1
-          }
+  }
+
+  return (
+    <>
+      {/* Hero Section */}
+      <Box
+        sx={{
+          background: `linear-gradient(to right, ${alpha(theme.palette.primary.dark, 0.9)}, ${alpha(theme.palette.primary.main, 0.8)})`,
+          color: "white",
+          py: { xs: 6, md: 8 },
+          mb: 4,
+          borderRadius: { xs: 0, md: 2 },
+          boxShadow: `0 4px 20px ${alpha(theme.palette.primary.main, 0.4)}`,
         }}
       >
-        <Typography 
-          variant="h4" 
-          component="h1" 
-          gutterBottom
-          sx={{ 
-            fontWeight: 'bold',
-            color: theme.palette.primary.main,
-            textShadow: `0 0 15px ${alpha(theme.palette.primary.main, 0.4)}`,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.5,
-            mb: 3,
-            position: 'relative',
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              bottom: -8,
-              left: 0,
-              width: '60px',
-              height: '3px',
-              background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${alpha(theme.palette.primary.main, 0.2)})`,
-              borderRadius: '2px',
-              boxShadow: `0 0 10px ${alpha(theme.palette.primary.main, 0.7)}`
-            }
-          }}
-        >
-          <RestaurantMenuIcon 
-            fontSize="large" 
-            sx={{
-              filter: `drop-shadow(0 0 8px ${alpha(theme.palette.primary.main, 0.7)})`
-            }}
-          />
-          My Meal Plans
-        </Typography>
-        
-        <Button 
-          variant="contained" 
-          color="primary" 
-          startIcon={<AddIcon />}
-          onClick={() => handleOpenForm()}
-          sx={{ 
-            mb: 4,
-            px: 3,
-            py: 1,
-            borderRadius: 2,
-            fontWeight: 'medium',
-            boxShadow: `0 0 15px ${alpha(theme.palette.primary.main, 0.4)}`,
-            background: `linear-gradient(45deg, ${alpha(theme.palette.primary.dark, 0.95)}, ${alpha(theme.palette.primary.main, 0.85)})`,
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(8px)',
-            transition: 'all 0.3s ease',
-            '&:hover': {
-              boxShadow: `0 0 25px ${alpha(theme.palette.primary.main, 0.6)}`,
-              transform: 'translateY(-2px)'
-            }
-          }}
-        >
-          Create New Meal Plan
-        </Button>
-        
-        {/* Display meal plans table */}
-        <Paper
-          elevation={3}
-          sx={{
-            borderRadius: 2,
-            overflow: 'hidden',
-            border: `1px solid ${alpha(theme.palette.primary.main, 0.4)}`,
-            position: 'relative',
-            backgroundColor: alpha(theme.palette.background.paper, 0.9),
-            backdropFilter: 'blur(8px)',
-            transition: 'all 0.3s ease',
-            '&:hover': {
-              boxShadow: `0 0 20px ${alpha(theme.palette.primary.main, 0.3)}`,
-            },
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              inset: 0,
-              borderRadius: 2,
-              padding: '1px',
-              background: `linear-gradient(90deg, 
-                ${alpha(theme.palette.primary.main, 0.7)}, 
-                ${alpha(theme.palette.secondary.main, 0.7)}, 
-                ${alpha(theme.palette.success.main, 0.7)})`,
-              WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-              WebkitMaskComposite: 'xor',
-              maskComposite: 'exclude',
-              pointerEvents: 'none'
-            }
-          }}
-        >
-          <MealPlanTable 
-            loading={loading && pageLoading && !openForm && !openDeleteDialog}
-            error={error}
-            mealPlans={mealPlans}
-            onEdit={handleOpenForm}
-            onDelete={handleOpenDeleteDialog}
-          />
-        </Paper>        {/* Create/Edit Meal Plan Form Dialog */}
-        <DragDropMealPlanForm
-          open={openForm}
-          isEditing={isEditing}
-          loading={loading && pageLoading}
-          currentMealPlan={currentMealPlan}
-          ingredients={ingredients}
-          meals={meals}
-          onClose={handleCloseForm}
-          onSubmit={handleSubmit}
-          onMealPlanChange={handleChange}
-        />
-
-        {/* Delete Confirmation Dialog with neon styling */}
-        <DeleteConfirmationDialog
-          open={openDeleteDialog}
-          mealPlan={currentMealPlan}
-          loading={loading && pageLoading}
-          onClose={handleCloseDeleteDialog}
-          onConfirm={handleDelete}
-        />
-
-        {/* Enhanced Notifications with glow effects */}
-        <NotificationSnackbar
-          open={snackbar.open}
-          message={snackbar.message}
-          severity={snackbar.severity}
-          onClose={handleCloseSnackbar}
-        />
+        <Container maxWidth="lg">
+          <Grid container spacing={2} alignItems="center">
+            <Grid size={12}>
+              <Typography
+                variant="h3"
+                component="h1"
+                gutterBottom
+                fontWeight="bold"
+                sx={{
+                  textShadow: `0 2px 10px ${alpha(theme.palette.common.black, 0.3)}`,
+                }}
+              >
+                Plan Your Meals
+              </Typography>
+              <Typography variant="h6" sx={{ mb: 2, opacity: 0.9 }}>
+                Organize ingredients and meals into comprehensive meal plans
+              </Typography>
+            </Grid>
+            <Grid size={12} sx={{ textAlign: 'center' }}>
+              <RestaurantMenuIcon sx={{ fontSize: 100, opacity: 0.9 }} />
+            </Grid>
+          </Grid>
+        </Container>
       </Box>
-    </Container>
+
+      <Container>
+        <Box sx={{ position: 'relative', minHeight: '80vh' }}>
+          <PageHeader 
+            title="My Meal Plans"
+            icon={<RestaurantMenuIcon />}
+            color="primary"
+            onAddNew={() => handleOpenForm()}
+            addButtonText="Create New Meal Plan"
+          />
+          
+          {loading && pageLoading && !openForm && !openDeleteDialog ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : error ? (
+            <Alert severity="error" sx={{ my: 2 }}>{error}</Alert>
+          ) : mealPlans.length === 0 ? (
+            <Card sx={{ 
+              my: 4, 
+              boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.15)}`,
+              borderRadius: 2,
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+            }}>
+              <CardContent sx={{ textAlign: 'center', py: 6 }}>
+                <RestaurantMenuIcon sx={{ fontSize: 60, color: alpha(theme.palette.primary.main, 0.6), mb: 2 }} />
+                <Typography variant="h5" color="text.secondary" gutterBottom>
+                  No Meal Plans Yet
+                </Typography>
+                <Typography variant="body1" color="text.secondary" paragraph>
+                  You haven't created any meal plans yet. Click "Create New Meal Plan" to get started.
+                </Typography>
+              </CardContent>
+            </Card>
+          ) : (
+            <DataTable 
+              columns={columns}
+              data={mealPlans}
+              color="primary"
+              onEdit={handleOpenForm}
+              onDelete={handleOpenDeleteDialog}
+              getRowId={(row) => row._id}
+            />
+          )}
+
+          {/* Create/Edit Meal Plan Form Dialog */}
+          <DragDropMealPlanForm
+            open={openForm}
+            isEditing={isEditing}
+            loading={loading && pageLoading}
+            currentMealPlan={currentMealPlan}
+            ingredients={ingredients}
+            meals={meals}
+            onClose={handleCloseForm}
+            onSubmit={handleSubmit}
+            onMealPlanChange={handleChange}
+          />
+
+          {/* Delete Confirmation Dialog */}
+          <DeleteConfirmationDialog
+            open={openDeleteDialog}
+            onClose={handleCloseDeleteDialog}
+            onConfirm={handleDelete}
+            title="Confirm Deletion"
+            message={`Are you sure you want to delete the meal plan "${currentMealPlan.name}"? This action cannot be undone.`}
+            loading={loading && pageLoading}
+          />
+
+          {/* Snackbar for notifications */}
+          <ClientSnackbar 
+            open={snackbar.open} 
+            autoHideDuration={6000} 
+            onClose={handleCloseSnackbar}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          >
+            <Alert 
+              onClose={handleCloseSnackbar} 
+              severity={snackbar.severity}
+              sx={{ width: '100%' }}
+            >
+              {snackbar.message}
+            </Alert>
+          </ClientSnackbar>
+        </Box>
+      </Container>
+    </>
   );
 };
 

@@ -3,18 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { 
-  Container, Typography, Box, Button, Table, TableBody, 
-  TableCell, TableContainer, TableHead, TableRow, Paper,
-  IconButton, Dialog, DialogActions, DialogContent, DialogTitle,
-  TextField, Grid, CircularProgress, Snackbar, Alert,
-  MenuItem, Select, FormControl, InputLabel, Chip, Stack,
-  useTheme, alpha
+  Container, Box, CircularProgress, Snackbar, Alert,
+  useTheme, alpha, Typography, Card, CardContent, Grid
 } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
 import FastfoodIcon from '@mui/icons-material/Fastfood';
-import RestaurantIcon from '@mui/icons-material/Restaurant';
 import graphqlClient from '../../services/graphql';
 import { 
   getAllMeals, 
@@ -29,10 +21,17 @@ import {
   Ingredient
 } from '../../services/ingredientService';
 import { useAuth } from '../../context/AuthContext';
+import PageHeader from '@/components/PageHeader';
+import DataTable from '@/components/DataTable';
+import { Column } from '@/components/DataTable';
+import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog';
 
 // Fix for hydration issues - load these components only on client side
-const ClientDialog = dynamic(() => Promise.resolve(Dialog), { ssr: false });
 const ClientSnackbar = dynamic(() => Promise.resolve(Snackbar), { ssr: false });
+const MealEditDialog = dynamic(
+  () => import('@/components/meals/MealEditDialog'), 
+  { ssr: false }
+);
 
 const defaultMeal: Meal = {
   _id: '',
@@ -49,7 +48,7 @@ const defaultMeal: Meal = {
 };
 
 const MealsPage: React.FC = () => {
-  const { user, logout, loading } = useAuth();
+  const { user, loading } = useAuth();
   const theme = useTheme();
 
   const [meals, setMeals] = useState<Meal[]>([]);
@@ -60,8 +59,6 @@ const MealsPage: React.FC = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [currentMeal, setCurrentMeal] = useState<Meal>(defaultMeal);
   const [isEditing, setIsEditing] = useState(false);
-  const [selectedIngredientId, setSelectedIngredientId] = useState<string>('');
-  const [selectedQuantity, setSelectedQuantity] = useState<number>(1);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
@@ -141,12 +138,12 @@ const MealsPage: React.FC = () => {
     });
   };
 
-  const handleAddIngredient = () => {
-    if (!selectedIngredientId || selectedQuantity <= 0) return;
+  const handleAddIngredient = (ingredientId: string, quantity: number) => {
+    if (!ingredientId || quantity <= 0) return;
     
     // Check if ingredient already exists in meal
     const existingIngredientIndex = currentMeal.ingredients.findIndex(
-      (item) => item.ingredientId === selectedIngredientId
+      (item) => item.ingredientId === ingredientId
     );
     
     let updatedIngredients;
@@ -156,13 +153,13 @@ const MealsPage: React.FC = () => {
       updatedIngredients = [...currentMeal.ingredients];
       updatedIngredients[existingIngredientIndex] = {
         ...updatedIngredients[existingIngredientIndex],
-        quantity: selectedQuantity
+        quantity: quantity
       };
     } else {
       // Add new ingredient to the meal
       updatedIngredients = [
         ...currentMeal.ingredients,
-        { ingredientId: selectedIngredientId, quantity: selectedQuantity }
+        { ingredientId, quantity }
       ];
     }
     
@@ -170,8 +167,6 @@ const MealsPage: React.FC = () => {
     const updatedMeal = calculateMealNutrition(updatedIngredients);
     
     setCurrentMeal(updatedMeal);
-    setSelectedIngredientId('');
-    setSelectedQuantity(1);
   };
 
   const handleRemoveIngredient = (ingredientId: string) => {
@@ -201,7 +196,7 @@ const MealsPage: React.FC = () => {
         totalProtein += ingredient.macros.protein * ratio;
         totalCarbs += ingredient.macros.carbs * ratio;
         totalFat += ingredient.macros.fat * ratio;
-        totalPrice += (ingredient.price || 0) * (mealIngredient.quantity / ingredient.quantity);
+        totalPrice += (ingredient.price || 0) * (mealIngredient.quantity);
       }
     });
     
@@ -290,6 +285,45 @@ const MealsPage: React.FC = () => {
     return ingredient ? ingredient.name : 'Unknown Ingredient';
   };
 
+  // Define table columns with unique ids
+  const columns: Column[] = [
+    { 
+      id: 'name', 
+      label: 'Name',
+      format: (value) => <span style={{ fontWeight: 'medium' }}>{value}</span>
+    },
+    { 
+      id: 'ingredients', 
+      label: 'Number of Ingredients',
+      format: (value) => value.length
+    },
+    { 
+      id: 'macros.calories', 
+      label: 'Calories',
+      format: (value, row) => <span style={{ color: theme.palette.error.main }}>{row.macros.calories}</span>
+    },
+    { 
+      id: 'macros.protein', 
+      label: 'Protein (g)',
+      format: (value, row) => <span style={{ color: theme.palette.info.main }}>{row.macros.protein}</span>
+    },
+    { 
+      id: 'macros.carbs', 
+      label: 'Carbs (g)',
+      format: (value, row) => <span style={{ color: theme.palette.warning.main }}>{row.macros.carbs}</span>
+    },
+    { 
+      id: 'macros.fat', 
+      label: 'Fat (g)',
+      format: (value, row) => <span style={{ color: '#FFA726' }}>{row.macros.fat}</span>
+    },
+    { 
+      id: 'price', 
+      label: 'Price',
+      format: (value) => <span style={{ color: theme.palette.success.main, fontWeight: 'medium' }}>${value.toFixed(2)}</span>
+    }
+  ];
+
   if (!isMounted) {
     return (
       <Container>
@@ -299,343 +333,131 @@ const MealsPage: React.FC = () => {
       </Container>
     );
   }
+
   return (
-    <Container>
-      <Box 
-        sx={{ 
-          my: 4,
-          position: 'relative',
-          minHeight: '80vh',
-          '&::before': {
-            content: '""',
-            position: 'fixed',
-            inset: 0,
-            background: 'radial-gradient(circle at 30% 30%, rgba(156, 39, 176, 0.08), transparent 70%), radial-gradient(circle at 70% 80%, rgba(156, 39, 176, 0.05), transparent 50%)',
-            pointerEvents: 'none',
-            zIndex: -1
-          }
+    <>
+      {/* Hero Section */}
+      <Box
+        sx={{
+          background: `linear-gradient(to right, ${alpha(theme.palette.secondary.dark, 0.9)}, ${alpha(theme.palette.secondary.main, 0.8)})`,
+          color: "white",
+          py: { xs: 6, md: 8 },
+          mb: 4,
+          borderRadius: { xs: 0, md: 2 },
+          boxShadow: `0 4px 20px ${alpha(theme.palette.secondary.main, 0.4)}`,
         }}
       >
-        <Typography 
-          variant="h4" 
-          component="h1" 
-          gutterBottom
-          sx={{ 
-            fontWeight: 'bold',
-            color: theme.palette.secondary.main,
-            textShadow: `0 0 15px ${alpha(theme.palette.secondary.main, 0.4)}`,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.5,
-            mb: 3,
-            position: 'relative',
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              bottom: -8,
-              left: 0,
-              width: '60px',
-              height: '3px',
-              background: `linear-gradient(90deg, ${theme.palette.secondary.main}, ${alpha(theme.palette.secondary.main, 0.2)})`,
-              borderRadius: '2px',
-              boxShadow: `0 0 10px ${alpha(theme.palette.secondary.main, 0.7)}`
-            }
-          }}
-        >
-          <FastfoodIcon 
-            fontSize="large" 
-            sx={{
-              filter: `drop-shadow(0 0 8px ${alpha(theme.palette.secondary.main, 0.7)})`
-            }}
-          />
-          My Meals
-        </Typography>
-        
-        <Button 
-          variant="contained" 
-          color="secondary" 
-          startIcon={<AddIcon />}
-          onClick={() => handleOpenForm()}
-          sx={{ 
-            mb: 4,
-            px: 3,
-            py: 1,
-            borderRadius: 2,
-            fontWeight: 'medium',
-            boxShadow: `0 0 15px ${alpha(theme.palette.secondary.main, 0.4)}`,
-            background: `linear-gradient(45deg, ${alpha(theme.palette.secondary.dark, 0.95)}, ${alpha(theme.palette.secondary.main, 0.85)})`,
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(8px)',
-            transition: 'all 0.3s ease',
-            '&:hover': {
-              boxShadow: `0 0 25px ${alpha(theme.palette.secondary.main, 0.6)}`,
-              transform: 'translateY(-2px)'
-            }
-          }}
-        >
-          Add New Meal
-        </Button>
-        
-        {loading && pageLoading && !openForm && !openDeleteDialog ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-            <CircularProgress />
-          </Box>
-        ) : error ? (
-          <Alert severity="error" sx={{ my: 2 }}>{error}</Alert>
-        ) : meals.length === 0 ? (
-          <Alert severity="info" sx={{ my: 2 }}>
-            You don't have any meals yet. Create your first one!
-          </Alert>
-        ) : (
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Number of Ingredients</TableCell>
-                  <TableCell>Calories</TableCell>
-                  <TableCell>Protein (g)</TableCell>
-                  <TableCell>Carbs (g)</TableCell>
-                  <TableCell>Fat (g)</TableCell>
-                  <TableCell>Price</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {meals.map((meal) => (
-                  <TableRow key={meal._id}>
-                    <TableCell>{meal.name}</TableCell>
-                    <TableCell>{meal.ingredients.length}</TableCell>
-                    <TableCell>{meal.macros.calories}</TableCell>
-                    <TableCell>{meal.macros.protein}</TableCell>
-                    <TableCell>{meal.macros.carbs}</TableCell>
-                    <TableCell>{meal.macros.fat}</TableCell>
-                    <TableCell>${meal.price.toFixed(2)}</TableCell>
-                    <TableCell>
-                      <IconButton 
-                        color="primary" 
-                        onClick={() => handleOpenForm(meal)}
-                        aria-label="edit"
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton 
-                        color="error" 
-                        onClick={() => handleOpenDeleteDialog(meal)}
-                        aria-label="delete"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-
-        {/* Create/Edit Meal Form Dialog */}
-        <ClientDialog open={openForm} onClose={handleCloseForm} maxWidth="md" fullWidth>
-          <DialogTitle>
-            {isEditing ? 'Edit Meal' : 'Add New Meal'}
-          </DialogTitle>
-          <form onSubmit={handleSubmit}>
-            <DialogContent>
-              <Grid container spacing={2}>
-                <Grid size={12}>
-                  <TextField
-                    autoFocus
-                    name="name"
-                    label="Meal Name"
-                    fullWidth
-                    required
-                    value={currentMeal.name}
-                    onChange={handleChange}
-                  />
-                </Grid>
-                
-                <Grid size={12}>
-                  <Typography variant="subtitle1" gutterBottom sx={{ mt: 1 }}>
-                    Ingredients
-                  </Typography>
-                </Grid>
-                
-                <Grid size={5}>
-                  <FormControl fullWidth>
-                    <InputLabel>Select Ingredient</InputLabel>
-                    <Select
-                      value={selectedIngredientId}
-                      onChange={(e) => setSelectedIngredientId(e.target.value as string)}
-                      label="Select Ingredient"
-                    >
-                      {ingredients.map(ingredient => (
-                        <MenuItem key={ingredient._id} value={ingredient._id}>
-                          {ingredient.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                
-                <Grid size={4}>
-                  <TextField
-                    type="number"
-                    label="Quantity"
-                    fullWidth
-                    value={selectedQuantity}
-                    onChange={(e) => setSelectedQuantity(parseFloat(e.target.value) || 0)}
-                    inputProps={{ min: 0, step: "any" }}
-                  />
-                </Grid>
-                
-                <Grid size={3}>
-                  <Button
-                    variant="contained"
-                    onClick={handleAddIngredient}
-                    fullWidth
-                    sx={{ height: '100%' }}
-                    disabled={!selectedIngredientId || selectedQuantity <= 0}
-                  >
-                    Add
-                  </Button>
-                </Grid>
-                
-                <Grid size={12}>
-                  <Box sx={{ mt: 2, mb: 2 }}>
-                    <Typography variant="subtitle2" gutterBottom>
-                      Current Ingredients:
-                    </Typography>
-                    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                      {currentMeal.ingredients.length === 0 ? (
-                        <Typography variant="body2" color="text.secondary">
-                          No ingredients added yet
-                        </Typography>
-                      ) : (
-                        currentMeal.ingredients.map((item) => (
-                          <Chip
-                            key={item.ingredientId}
-                            label={`${getIngredientNameById(item.ingredientId)} (${item.quantity})`}
-                            onClick={() => {
-                                setSelectedIngredientId(item.ingredientId);
-                                setSelectedQuantity(item.quantity);
-                            }}
-                            onDelete={() => handleRemoveIngredient(item.ingredientId)}
-                            sx={{ margin: '4px' }}
-                          />
-                        ))
-                      )}
-                    </Stack>
-                  </Box>
-                </Grid>
-                
-                <Grid size={12}>
-                  <Typography variant="subtitle1" gutterBottom sx={{ mt: 1 }}>
-                    Calculated Nutrition Information
-                  </Typography>
-                </Grid>
-                
-                <Grid size={3}>
-                  <TextField
-                    label="Calories"
-                    type="number"
-                    fullWidth
-                    disabled
-                    value={currentMeal.macros.calories}
-                  />
-                </Grid>
-                
-                <Grid size={3}>
-                  <TextField
-                    label="Protein (g)"
-                    type="number"
-                    fullWidth
-                    disabled
-                    value={currentMeal.macros.protein}
-                  />
-                </Grid>
-                
-                <Grid size={3}>
-                  <TextField
-                    label="Carbs (g)"
-                    type="number"
-                    fullWidth
-                    disabled
-                    value={currentMeal.macros.carbs}
-                  />
-                </Grid>
-                
-                <Grid size={3}>
-                  <TextField
-                    label="Fat (g)"
-                    type="number"
-                    fullWidth
-                    disabled
-                    value={currentMeal.macros.fat}
-                  />
-                </Grid>
-                
-                <Grid size={12}>
-                  <TextField
-                    label="Total Price"
-                    type="number"
-                    fullWidth
-                    disabled
-                    value={currentMeal.price}
-                  />
-                </Grid>
-              </Grid>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={handleCloseForm}>Cancel</Button>
-              <Button 
-                type="submit" 
-                variant="contained" 
-                color="primary"
-                disabled={loading && pageLoading}
+        <Container maxWidth="lg">
+          <Grid container spacing={2} alignItems="center">
+            <Grid size={12}>
+              <Typography
+                variant="h3"
+                component="h1"
+                gutterBottom
+                fontWeight="bold"
+                sx={{
+                  textShadow: `0 2px 10px ${alpha(theme.palette.common.black, 0.3)}`,
+                }}
               >
-                {(loading && pageLoading) ? <CircularProgress size={24} /> : isEditing ? 'Update' : 'Create'}
-              </Button>
-            </DialogActions>
-          </form>
-        </ClientDialog>
-
-        {/* Delete Confirmation Dialog */}
-        <ClientDialog open={openDeleteDialog} onClose={handleCloseDeleteDialog}>
-          <DialogTitle>Confirm Deletion</DialogTitle>
-          <DialogContent>
-            Are you sure you want to delete the meal "{currentMeal.name}"? 
-            This action cannot be undone.
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseDeleteDialog}>Cancel</Button>
-            <Button 
-              onClick={handleDelete} 
-              color="error" 
-              variant="contained"
-              disabled={loading && pageLoading}
-            >
-              {(loading && pageLoading) ? <CircularProgress size={24} /> : 'Delete'}
-            </Button>
-          </DialogActions>
-        </ClientDialog>
-
-        {/* Snackbar for notifications */}
-        <ClientSnackbar 
-          open={snackbar.open} 
-          autoHideDuration={6000} 
-          onClose={handleCloseSnackbar}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        >
-          <Alert 
-            onClose={handleCloseSnackbar} 
-            severity={snackbar.severity}
-            sx={{ width: '100%' }}
-          >
-            {snackbar.message}
-          </Alert>
-        </ClientSnackbar>
+                Create Your Meals
+              </Typography>
+              <Typography variant="h6" sx={{ mb: 2, opacity: 0.9 }}>
+                Combine ingredients into balanced meals with automatic nutrition tracking
+              </Typography>
+            </Grid>
+            <Grid size={12} sx={{ textAlign: 'center' }}>
+              <FastfoodIcon sx={{ fontSize: 100, opacity: 0.9 }} />
+            </Grid>
+          </Grid>
+        </Container>
       </Box>
-    </Container>
+
+      <Container>
+        <Box sx={{ position: 'relative', minHeight: '80vh' }}>
+          <PageHeader 
+            title="My Meals"
+            icon={<FastfoodIcon />}
+            color="secondary"
+            onAddNew={() => handleOpenForm()}
+            addButtonText="Create New Meal"
+          />
+          
+          {loading && pageLoading && !openForm && !openDeleteDialog ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : error ? (
+            <Alert severity="error" sx={{ my: 2 }}>{error}</Alert>
+          ) : meals.length === 0 ? (
+            <Card sx={{ 
+              my: 4, 
+              boxShadow: `0 8px 24px ${alpha(theme.palette.secondary.main, 0.15)}`,
+              borderRadius: 2,
+              border: `1px solid ${alpha(theme.palette.secondary.main, 0.2)}`,
+            }}>
+              <CardContent sx={{ textAlign: 'center', py: 6 }}>
+                <FastfoodIcon sx={{ fontSize: 60, color: alpha(theme.palette.secondary.main, 0.6), mb: 2 }} />
+                <Typography variant="h5" color="text.secondary" gutterBottom>
+                  No Meals Yet
+                </Typography>
+                <Typography variant="body1" color="text.secondary" paragraph>
+                  You haven't created any meals yet. Click "Create New Meal" to get started.
+                </Typography>
+              </CardContent>
+            </Card>
+          ) : (
+            <DataTable 
+              columns={columns}
+              data={meals}
+              color="secondary"
+              onEdit={handleOpenForm}
+              onDelete={handleOpenDeleteDialog}
+              getRowId={(row) => row._id}
+            />
+          )}
+
+          {/* Create/Edit Meal Form Dialog */}
+          <MealEditDialog
+            open={openForm}
+            onClose={handleCloseForm}
+            onSubmit={handleSubmit}
+            meal={currentMeal}
+            onChange={handleChange}
+            isEditing={isEditing}
+            loading={loading && pageLoading}
+            ingredients={ingredients}
+            onAddIngredient={handleAddIngredient}
+            onRemoveIngredient={handleRemoveIngredient}
+          />
+
+          {/* Delete Confirmation Dialog */}
+          <DeleteConfirmationDialog
+            open={openDeleteDialog}
+            onClose={handleCloseDeleteDialog}
+            onConfirm={handleDelete}
+            title="Confirm Deletion"
+            message={`Are you sure you want to delete the meal "${currentMeal.name}"? This action cannot be undone.`}
+            loading={loading && pageLoading}
+          />
+
+          {/* Snackbar for notifications */}
+          <ClientSnackbar 
+            open={snackbar.open} 
+            autoHideDuration={6000} 
+            onClose={handleCloseSnackbar}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          >
+            <Alert 
+              onClose={handleCloseSnackbar} 
+              severity={snackbar.severity}
+              sx={{ width: '100%' }}
+            >
+              {snackbar.message}
+            </Alert>
+          </ClientSnackbar>
+        </Box>
+      </Container>
+    </>
   );
 };
 

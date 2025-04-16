@@ -140,22 +140,22 @@ const NutritionTracker: React.FC<NutritionTrackerProps> = ({ nutrition }) => {
               <Box 
                 sx={{ 
                   width: `${proteinPercentage}%`, 
-                  bgcolor: '#1c8ecc',
-                  boxShadow: `0 0 10px #1c8ecc`
+                  bgcolor: 'var(--theme-color-protein)',
+                  boxShadow: `0 0 10px var(--theme-color-protein)`
                 }} 
               />
               <Box 
                 sx={{ 
                   width: `${carbsPercentage}%`, 
-                  bgcolor: '#911ccc',
-                  boxShadow: `0 0 10px #911ccc`
+                  bgcolor: 'var(--theme-color-carbs)',
+                  boxShadow: `0 0 10px var(--theme-color-carbs)`
                 }} 
               />
               <Box 
                 sx={{ 
                   width: `${fatPercentage}%`, 
-                  bgcolor: '#FFA726',
-                  boxShadow: `0 0 10px #FFA726`
+                  bgcolor: 'var(--theme-color-fat)',
+                  boxShadow: `0 0 10px var(--theme-color-fat)`
                 }} 
               />
             </Box>
@@ -164,9 +164,9 @@ const NutritionTracker: React.FC<NutritionTrackerProps> = ({ nutrition }) => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <EggAltIcon 
                   sx={{ 
-                    color: '#1c8ecc',
+                    color: 'var(--theme-color-protein)',
                     fontSize: 16,
-                    filter: `drop-shadow(0 0 3px #1c8ecc)`
+                    filter: `drop-shadow(0 0 3px var(--theme-color-protein))`
                   }}
                 />
                 <Typography variant="caption">{nutrition.protein.toFixed(1)}g</Typography>
@@ -174,9 +174,9 @@ const NutritionTracker: React.FC<NutritionTrackerProps> = ({ nutrition }) => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <GrainIcon 
                   sx={{ 
-                    color: '#911ccc',
+                    color: 'var(--theme-color-carbs)',
                     fontSize: 16,
-                    filter: `drop-shadow(0 0 3px #911ccc)`
+                    filter: `drop-shadow(0 0 3px var(--theme-color-carbs))`
                   }}
                 />
                 <Typography variant="caption">{nutrition.carbs.toFixed(1)}g</Typography>
@@ -184,9 +184,9 @@ const NutritionTracker: React.FC<NutritionTrackerProps> = ({ nutrition }) => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <OilBarrelIcon 
                   sx={{ 
-                    color: '#FFA726',
+                    color: 'var(--theme-color-fat)',
                     fontSize: 16,
-                    filter: `drop-shadow(0 0 3px ${alpha('#FFA726', 0.6)})`
+                    filter: `drop-shadow(0 0 3px var(--theme-color-fat))`
                   }}
                 />
                 <Typography variant="caption">{nutrition.fat.toFixed(1)}g</Typography>

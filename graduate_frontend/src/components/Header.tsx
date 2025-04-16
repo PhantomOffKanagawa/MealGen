@@ -15,7 +15,16 @@ export default function Header() {
     const isActive = (path: string) => {
         return pathname === path;
     };
-    
+
+    const routeColorTranslation: { [key: string]: string } = {
+        '/': theme.palette.primary.main,
+        '/ingredients': theme.palette.success.main,
+        '/meals': theme.palette.secondary.main,
+        '/meal-plans': theme.palette.primary.main,
+    };
+
+    const getRouteColor = () => routeColorTranslation[pathname] || theme.palette.text.primary;
+
     return (
         <AppBar 
             position="static" 
@@ -23,15 +32,15 @@ export default function Header() {
             sx={{ 
                 background: `linear-gradient(to bottom, ${alpha(theme.palette.background.paper, 0.95)}, ${alpha(theme.palette.background.paper, 0.9)})`,
                 backdropFilter: 'blur(10px)',
-                borderBottom: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
-                boxShadow: `0 4px 20px ${alpha(theme.palette.primary.main, 0.2)}`,
+                borderBottom: `1px solid ${alpha(getRouteColor(), 0.3)}`,
+                boxShadow: `0 4px 20px ${alpha(getRouteColor(), 0.2)}`,
                 position: 'relative',
                 '&::before': {
                     content: '""',
                     position: 'absolute',
                     inset: 0,
                     borderBottom: '1px solid transparent',
-                    background: `linear-gradient(90deg, ${alpha(theme.palette.primary.main, 0)}, ${alpha(theme.palette.primary.main, 0.6)}, ${alpha(theme.palette.primary.main, 0)})`,
+                    background: `linear-gradient(90deg, ${alpha(getRouteColor(), 0)}, ${alpha(getRouteColor(), 0.6)}, ${alpha(getRouteColor(), 0)})`,
                     WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
                     WebkitMaskComposite: 'xor',
                     maskComposite: 'exclude',
@@ -46,8 +55,8 @@ export default function Header() {
                             sx={{ 
                                 display: { xs: 'none', md: 'flex' }, 
                                 mr: 1,
-                                color: theme.palette.primary.main,
-                                filter: `drop-shadow(0 0 6px ${alpha(theme.palette.primary.main, 0.7)})`,
+                                color: getRouteColor(),
+                                filter: `drop-shadow(0 0 6px ${alpha(getRouteColor(), 0.7)})`,
                             }} 
                         />
                         <Typography
@@ -59,13 +68,13 @@ export default function Header() {
                                 mr: 2,
                                 display: { xs: 'none', md: 'flex' },
                                 fontWeight: 700,
-                                color: theme.palette.primary.main,
+                                color: getRouteColor(),
                                 textDecoration: 'none',
-                                textShadow: `0 0 10px ${alpha(theme.palette.primary.main, 0.6)}`,
+                                textShadow: `0 0 10px ${alpha(getRouteColor(), 0.6)}`,
                                 letterSpacing: '0.5px',
                                 transition: 'all 0.2s ease',
                                 '&:hover': {
-                                    textShadow: `0 0 15px ${alpha(theme.palette.primary.main, 0.8)}`,
+                                    textShadow: `0 0 15px ${alpha(getRouteColor(), 0.8)}`,
                                 }
                             }}
                         >
@@ -78,14 +87,14 @@ export default function Header() {
                             component={Link}
                             href="/"
                             sx={{ 
-                                color: isActive('/') ? theme.palette.primary.main : 'text.primary',
+                                color: isActive('/') ? getRouteColor() : 'text.primary',
                                 fontWeight: isActive('/') ? 'bold' : 'medium',
                                 borderRadius: 0,
                                 position: 'relative',
                                 overflow: 'hidden',
                                 padding: '6px 12px',
                                 transition: 'all 0.3s ease',
-                                textShadow: isActive('/') ? `0 0 8px ${alpha(theme.palette.primary.main, 0.6)}` : 'none',
+                                textShadow: isActive('/') ? `0 0 8px ${alpha(getRouteColor(), 0.6)}` : 'none',
                                 '&::after': {
                                     content: '""',
                                     position: 'absolute',
@@ -93,16 +102,16 @@ export default function Header() {
                                     left: 0,
                                     width: '100%',
                                     height: '2px',
-                                    backgroundColor: isActive('/') ? theme.palette.primary.main : 'transparent',
-                                    boxShadow: isActive('/') ? `0 0 10px ${alpha(theme.palette.primary.main, 0.8)}` : 'none',
+                                    backgroundColor: isActive('/') ? getRouteColor() : 'transparent',
+                                    boxShadow: isActive('/') ? `0 0 10px ${alpha(getRouteColor(), 0.8)}` : 'none',
                                     transition: 'all 0.3s ease'
                                 },
                                 '&:hover': { 
                                     backgroundColor: 'transparent', 
-                                    color: theme.palette.primary.main,
+                                    color: getRouteColor(),
                                     '&::after': {
-                                        backgroundColor: theme.palette.primary.main,
-                                        boxShadow: `0 0 10px ${alpha(theme.palette.primary.main, 0.8)}`
+                                        backgroundColor: getRouteColor(),
+                                        boxShadow: `0 0 10px ${alpha(getRouteColor(), 0.8)}`
                                     }
                                 }
                             }}
@@ -186,14 +195,14 @@ export default function Header() {
                                     component={Link}
                                     href="/meal-plans"
                                     sx={{ 
-                                        color: isActive('/meal-plans') ? theme.palette.primary.main : 'text.primary',
+                                        color: isActive('/meal-plans') ? getRouteColor() : 'text.primary',
                                         fontWeight: isActive('/meal-plans') ? 'bold' : 'medium',
                                         borderRadius: 0,
                                         position: 'relative',
                                         overflow: 'hidden',
                                         padding: '6px 12px',
                                         transition: 'all 0.3s ease',
-                                        textShadow: isActive('/meal-plans') ? `0 0 8px ${alpha(theme.palette.primary.main, 0.6)}` : 'none',
+                                        textShadow: isActive('/meal-plans') ? `0 0 8px ${alpha(getRouteColor(), 0.6)}` : 'none',
                                         '&::after': {
                                             content: '""',
                                             position: 'absolute',
@@ -201,16 +210,16 @@ export default function Header() {
                                             left: 0,
                                             width: '100%',
                                             height: '2px',
-                                            backgroundColor: isActive('/meal-plans') ? theme.palette.primary.main : 'transparent',
-                                            boxShadow: isActive('/meal-plans') ? `0 0 10px ${alpha(theme.palette.primary.main, 0.8)}` : 'none',
+                                            backgroundColor: isActive('/meal-plans') ? getRouteColor() : 'transparent',
+                                            boxShadow: isActive('/meal-plans') ? `0 0 10px ${alpha(getRouteColor(), 0.8)}` : 'none',
                                             transition: 'all 0.3s ease'
                                         },
                                         '&:hover': { 
                                             backgroundColor: 'transparent', 
-                                            color: theme.palette.primary.main,
+                                            color: getRouteColor(),
                                             '&::after': {
-                                                backgroundColor: theme.palette.primary.main,
-                                                boxShadow: `0 0 10px ${alpha(theme.palette.primary.main, 0.8)}`
+                                                backgroundColor: getRouteColor(),
+                                                boxShadow: `0 0 10px ${alpha(getRouteColor(), 0.8)}`
                                             }
                                         }
                                     }}
@@ -249,14 +258,14 @@ export default function Header() {
                                     borderRadius: 6,
                                     backgroundColor: alpha(theme.palette.background.default, 0.4),
                                     backdropFilter: 'blur(10px)',
-                                    border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                                    border: `1px solid ${alpha(getRouteColor(), 0.2)}`,
                                 }}>
                                     <Avatar 
                                         sx={{ 
                                             width: 32, 
                                             height: 32, 
-                                            bgcolor: alpha(theme.palette.primary.main, 0.9),
-                                            boxShadow: `0 0 10px ${alpha(theme.palette.primary.main, 0.5)}`,
+                                            bgcolor: alpha(getRouteColor(), 0.9),
+                                            boxShadow: `0 0 10px ${alpha(getRouteColor(), 0.5)}`,
                                             border: `2px solid ${alpha(theme.palette.common.white, 0.8)}`
                                         }}
                                     >
@@ -303,15 +312,15 @@ export default function Header() {
                                     borderRadius: 4,
                                     px: 2.5,
                                     py: 0.75,
-                                    backgroundColor: alpha(theme.palette.primary.main, 0.9),
+                                    backgroundColor: alpha(getRouteColor(), 0.9),
                                     backdropFilter: 'blur(10px)',
-                                    boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`,
-                                    border: `1px solid ${alpha(theme.palette.primary.main, 0.6)}`,
+                                    boxShadow: `0 4px 12px ${alpha(getRouteColor(), 0.4)}`,
+                                    border: `1px solid ${alpha(getRouteColor(), 0.6)}`,
                                     transition: 'all 0.3s ease',
                                     '&:hover': {
-                                        backgroundColor: theme.palette.primary.main,
+                                        backgroundColor: getRouteColor(),
                                         transform: 'translateY(-2px)',
-                                        boxShadow: `0 6px 15px ${alpha(theme.palette.primary.main, 0.6)}`
+                                        boxShadow: `0 6px 15px ${alpha(getRouteColor(), 0.6)}`
                                     }
                                 }}
                             >
