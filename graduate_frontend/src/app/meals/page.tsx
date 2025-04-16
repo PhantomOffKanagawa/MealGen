@@ -7,11 +7,14 @@ import {
   TableCell, TableContainer, TableHead, TableRow, Paper,
   IconButton, Dialog, DialogActions, DialogContent, DialogTitle,
   TextField, Grid, CircularProgress, Snackbar, Alert,
-  MenuItem, Select, FormControl, InputLabel, Chip, Stack
+  MenuItem, Select, FormControl, InputLabel, Chip, Stack,
+  useTheme, alpha
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import FastfoodIcon from '@mui/icons-material/Fastfood';
+import RestaurantIcon from '@mui/icons-material/Restaurant';
 import graphqlClient from '../../services/graphql';
 import { 
   getAllMeals, 
@@ -47,6 +50,7 @@ const defaultMeal: Meal = {
 
 const MealsPage: React.FC = () => {
   const { user, logout, loading } = useAuth();
+  const theme = useTheme();
 
   const [meals, setMeals] = useState<Meal[]>([]);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
@@ -295,20 +299,79 @@ const MealsPage: React.FC = () => {
       </Container>
     );
   }
-
   return (
     <Container>
-      <Box sx={{ my: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
+      <Box 
+        sx={{ 
+          my: 4,
+          position: 'relative',
+          minHeight: '80vh',
+          '&::before': {
+            content: '""',
+            position: 'fixed',
+            inset: 0,
+            background: 'radial-gradient(circle at 30% 30%, rgba(156, 39, 176, 0.08), transparent 70%), radial-gradient(circle at 70% 80%, rgba(156, 39, 176, 0.05), transparent 50%)',
+            pointerEvents: 'none',
+            zIndex: -1
+          }
+        }}
+      >
+        <Typography 
+          variant="h4" 
+          component="h1" 
+          gutterBottom
+          sx={{ 
+            fontWeight: 'bold',
+            color: theme.palette.secondary.main,
+            textShadow: `0 0 15px ${alpha(theme.palette.secondary.main, 0.4)}`,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            mb: 3,
+            position: 'relative',
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              bottom: -8,
+              left: 0,
+              width: '60px',
+              height: '3px',
+              background: `linear-gradient(90deg, ${theme.palette.secondary.main}, ${alpha(theme.palette.secondary.main, 0.2)})`,
+              borderRadius: '2px',
+              boxShadow: `0 0 10px ${alpha(theme.palette.secondary.main, 0.7)}`
+            }
+          }}
+        >
+          <FastfoodIcon 
+            fontSize="large" 
+            sx={{
+              filter: `drop-shadow(0 0 8px ${alpha(theme.palette.secondary.main, 0.7)})`
+            }}
+          />
           My Meals
         </Typography>
         
         <Button 
           variant="contained" 
-          color="primary" 
+          color="secondary" 
           startIcon={<AddIcon />}
           onClick={() => handleOpenForm()}
-          sx={{ mb: 3 }}
+          sx={{ 
+            mb: 4,
+            px: 3,
+            py: 1,
+            borderRadius: 2,
+            fontWeight: 'medium',
+            boxShadow: `0 0 15px ${alpha(theme.palette.secondary.main, 0.4)}`,
+            background: `linear-gradient(45deg, ${alpha(theme.palette.secondary.dark, 0.95)}, ${alpha(theme.palette.secondary.main, 0.85)})`,
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(8px)',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              boxShadow: `0 0 25px ${alpha(theme.palette.secondary.main, 0.6)}`,
+              transform: 'translateY(-2px)'
+            }
+          }}
         >
           Add New Meal
         </Button>

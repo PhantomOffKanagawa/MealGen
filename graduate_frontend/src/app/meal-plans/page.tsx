@@ -10,9 +10,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  Container, Typography, Box, Button, CircularProgress
+  Container, Typography, Box, Button, CircularProgress,
+  Paper, useTheme, alpha
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
 import { useAuth } from '../../context/AuthContext';
 import graphqlClient from '../../services/graphql';
 import { 
@@ -53,9 +55,11 @@ const defaultMealPlan: MealPlan = {
  * 
  * Main container component for the meal plans feature.
  * Manages state and data fetching for all child components.
+ * Features a modern neon UI design with glow effects.
  */
 const MealPlansPage: React.FC = () => {
   const { user, loading } = useAuth();
+  const theme = useTheme();
 
   // State for meal plans and related data
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
@@ -447,12 +451,54 @@ const MealPlansPage: React.FC = () => {
         </Box>
       </Container>
     );
-  }
-
-  return (
-    <Container>
-      <Box sx={{ my: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
+  }  return (
+    <Container maxWidth="lg">      <Box 
+        sx={{ 
+          my: 4,
+          position: 'relative',
+          minHeight: '80vh',
+          '&::before': {
+            content: '""',
+            position: 'fixed',
+            inset: 0,
+            background: 'radial-gradient(circle at 50% 30%, rgba(25, 118, 210, 0.08), transparent 70%), radial-gradient(circle at 80% 80%, rgba(66, 66, 255, 0.05), transparent 50%)',
+            pointerEvents: 'none',
+            zIndex: -1
+          }
+        }}
+      >
+        <Typography 
+          variant="h4" 
+          component="h1" 
+          gutterBottom
+          sx={{ 
+            fontWeight: 'bold',
+            color: theme.palette.primary.main,
+            textShadow: `0 0 15px ${alpha(theme.palette.primary.main, 0.4)}`,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            mb: 3,
+            position: 'relative',
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              bottom: -8,
+              left: 0,
+              width: '60px',
+              height: '3px',
+              background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${alpha(theme.palette.primary.main, 0.2)})`,
+              borderRadius: '2px',
+              boxShadow: `0 0 10px ${alpha(theme.palette.primary.main, 0.7)}`
+            }
+          }}
+        >
+          <RestaurantMenuIcon 
+            fontSize="large" 
+            sx={{
+              filter: `drop-shadow(0 0 8px ${alpha(theme.palette.primary.main, 0.7)})`
+            }}
+          />
           My Meal Plans
         </Typography>
         
@@ -461,20 +507,65 @@ const MealPlansPage: React.FC = () => {
           color="primary" 
           startIcon={<AddIcon />}
           onClick={() => handleOpenForm()}
-          sx={{ mb: 3 }}
+          sx={{ 
+            mb: 4,
+            px: 3,
+            py: 1,
+            borderRadius: 2,
+            fontWeight: 'medium',
+            boxShadow: `0 0 15px ${alpha(theme.palette.primary.main, 0.4)}`,
+            background: `linear-gradient(45deg, ${alpha(theme.palette.primary.dark, 0.95)}, ${alpha(theme.palette.primary.main, 0.85)})`,
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(8px)',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              boxShadow: `0 0 25px ${alpha(theme.palette.primary.main, 0.6)}`,
+              transform: 'translateY(-2px)'
+            }
+          }}
         >
           Create New Meal Plan
         </Button>
         
         {/* Display meal plans table */}
-        <MealPlanTable 
-          loading={loading && pageLoading && !openForm && !openDeleteDialog}
-          error={error}
-          mealPlans={mealPlans}
-          onEdit={handleOpenForm}
-          onDelete={handleOpenDeleteDialog}
-        />
-            {/* Create/Edit Meal Plan Form Dialog */}
+        <Paper
+          elevation={3}
+          sx={{
+            borderRadius: 2,
+            overflow: 'hidden',
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.4)}`,
+            position: 'relative',
+            backgroundColor: alpha(theme.palette.background.paper, 0.9),
+            backdropFilter: 'blur(8px)',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              boxShadow: `0 0 20px ${alpha(theme.palette.primary.main, 0.3)}`,
+            },
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              inset: 0,
+              borderRadius: 2,
+              padding: '1px',
+              background: `linear-gradient(90deg, 
+                ${alpha(theme.palette.primary.main, 0.7)}, 
+                ${alpha(theme.palette.secondary.main, 0.7)}, 
+                ${alpha(theme.palette.success.main, 0.7)})`,
+              WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+              WebkitMaskComposite: 'xor',
+              maskComposite: 'exclude',
+              pointerEvents: 'none'
+            }
+          }}
+        >
+          <MealPlanTable 
+            loading={loading && pageLoading && !openForm && !openDeleteDialog}
+            error={error}
+            mealPlans={mealPlans}
+            onEdit={handleOpenForm}
+            onDelete={handleOpenDeleteDialog}
+          />
+        </Paper>        {/* Create/Edit Meal Plan Form Dialog */}
         <DragDropMealPlanForm
           open={openForm}
           isEditing={isEditing}
@@ -487,7 +578,7 @@ const MealPlansPage: React.FC = () => {
           onMealPlanChange={handleChange}
         />
 
-        {/* Delete Confirmation Dialog */}
+        {/* Delete Confirmation Dialog with neon styling */}
         <DeleteConfirmationDialog
           open={openDeleteDialog}
           mealPlan={currentMealPlan}
@@ -496,7 +587,7 @@ const MealPlansPage: React.FC = () => {
           onConfirm={handleDelete}
         />
 
-        {/* Notifications */}
+        {/* Enhanced Notifications with glow effects */}
         <NotificationSnackbar
           open={snackbar.open}
           message={snackbar.message}

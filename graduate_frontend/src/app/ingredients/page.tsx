@@ -6,11 +6,13 @@ import {
   Container, Typography, Box, Button, Table, TableBody, 
   TableCell, TableContainer, TableHead, TableRow, Paper,
   IconButton, Dialog, DialogActions, DialogContent, DialogTitle,
-  TextField, Grid, CircularProgress, Snackbar, Alert
+  TextField, Grid, CircularProgress, Snackbar, Alert,
+  useTheme, alpha
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import KitchenIcon from '@mui/icons-material/Kitchen';
 import graphqlClient from '../../services/graphql';
 import { 
   getAllIngredients, 
@@ -42,6 +44,7 @@ const defaultIngredient: Ingredient = {
 
 const IngredientsPage: React.FC = () => {
   const { user, logout, loading } = useAuth();
+  const theme = useTheme();
 
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [pageLoading, setPageLoading] = useState(true);
@@ -211,20 +214,79 @@ const IngredientsPage: React.FC = () => {
       </Container>
     );
   }
-
   return (
     <Container>
-      <Box sx={{ my: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
+      <Box 
+        sx={{ 
+          my: 4,
+          position: 'relative',
+          minHeight: '80vh',
+          '&::before': {
+            content: '""',
+            position: 'fixed',
+            inset: 0,
+            background: 'radial-gradient(circle at 70% 30%, rgba(76, 175, 80, 0.08), transparent 70%), radial-gradient(circle at 30% 80%, rgba(76, 175, 80, 0.05), transparent 50%)',
+            pointerEvents: 'none',
+            zIndex: -1
+          }
+        }}
+      >
+        <Typography 
+          variant="h4" 
+          component="h1" 
+          gutterBottom
+          sx={{ 
+            fontWeight: 'bold',
+            color: theme.palette.success.main,
+            textShadow: `0 0 15px ${alpha(theme.palette.success.main, 0.4)}`,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            mb: 3,
+            position: 'relative',
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              bottom: -8,
+              left: 0,
+              width: '60px',
+              height: '3px',
+              background: `linear-gradient(90deg, ${theme.palette.success.main}, ${alpha(theme.palette.success.main, 0.2)})`,
+              borderRadius: '2px',
+              boxShadow: `0 0 10px ${alpha(theme.palette.success.main, 0.7)}`
+            }
+          }}
+        >
+          <KitchenIcon 
+            fontSize="large" 
+            sx={{
+              filter: `drop-shadow(0 0 8px ${alpha(theme.palette.success.main, 0.7)})`
+            }}
+          />
           My Ingredients
         </Typography>
         
         <Button 
           variant="contained" 
-          color="primary" 
+          color="success" 
           startIcon={<AddIcon />}
           onClick={() => handleOpenForm()}
-          sx={{ mb: 3 }}
+          sx={{ 
+            mb: 4,
+            px: 3,
+            py: 1,
+            borderRadius: 2,
+            fontWeight: 'medium',
+            boxShadow: `0 0 15px ${alpha(theme.palette.success.main, 0.4)}`,
+            background: `linear-gradient(45deg, ${alpha(theme.palette.success.dark, 0.95)}, ${alpha(theme.palette.success.main, 0.85)})`,
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(8px)',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              boxShadow: `0 0 25px ${alpha(theme.palette.success.main, 0.6)}`,
+              transform: 'translateY(-2px)'
+            }
+          }}
         >
           Add New Ingredient
         </Button>
@@ -238,12 +300,46 @@ const IngredientsPage: React.FC = () => {
         ) : ingredients.length === 0 ? (
           <Alert severity="info" sx={{ my: 2 }}>
             You don't have any ingredients yet. Create your first one!
-          </Alert>
-        ) : (
-          <TableContainer component={Paper}>
+          </Alert>        ) : (
+          <TableContainer 
+            component={Paper}
+            sx={{
+              borderRadius: '12px',
+              overflow: 'hidden',
+              boxShadow: `0 8px 24px ${alpha(theme.palette.success.main, 0.15)}`,
+              background: alpha(theme.palette.background.paper, 0.8),
+              backdropFilter: 'blur(10px)',
+              border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
+              position: 'relative',
+              transition: 'all 0.3s ease',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                inset: 0,
+                borderRadius: '12px',
+                padding: '1px',
+                background: `linear-gradient(45deg, ${alpha(theme.palette.success.light, 0.6)}, transparent, ${alpha(theme.palette.success.main, 0.6)})`,
+                WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                WebkitMaskComposite: 'xor',
+                maskComposite: 'exclude',
+                pointerEvents: 'none'
+              },
+              '&:hover': {
+                boxShadow: `0 12px 28px ${alpha(theme.palette.success.main, 0.25)}`,
+              }
+            }}
+          >
             <Table>
               <TableHead>
-                <TableRow>
+                <TableRow sx={{ 
+                  background: `linear-gradient(90deg, ${alpha(theme.palette.success.dark, 0.15)}, ${alpha(theme.palette.success.main, 0.05)})`,
+                  '& .MuiTableCell-head': { 
+                    fontWeight: 'bold',
+                    color: theme.palette.success.dark,
+                    borderBottom: `2px solid ${alpha(theme.palette.success.light, 0.3)}`,
+                    py: 1.5
+                  }
+                }}>
                   <TableCell>Name</TableCell>
                   <TableCell>Quantity</TableCell>
                   <TableCell>Unit</TableCell>
@@ -252,34 +348,63 @@ const IngredientsPage: React.FC = () => {
                   <TableCell>Carbs (g)</TableCell>
                   <TableCell>Fat (g)</TableCell>
                   <TableCell>Price</TableCell>
-                  <TableCell>Actions</TableCell>
+                  <TableCell align="center">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {ingredients.map((ingredient) => (
-                  <TableRow key={ingredient._id}>
-                    <TableCell>{ingredient.name}</TableCell>
+                {ingredients.map((ingredient, index) => (
+                  <TableRow 
+                    key={ingredient._id}
+                    sx={{
+                      background: index % 2 === 0 ? 'transparent' : alpha(theme.palette.success.light, 0.03),
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        background: alpha(theme.palette.success.light, 0.07),
+                        boxShadow: `inset 0 0 15px ${alpha(theme.palette.success.main, 0.05)}`,
+                      }
+                    }}
+                  >
+                    <TableCell sx={{ fontWeight: 'medium' }}>{ingredient.name}</TableCell>
                     <TableCell>{ingredient.quantity}</TableCell>
                     <TableCell>{ingredient.unit}</TableCell>
-                    <TableCell>{ingredient.macros.calories}</TableCell>
-                    <TableCell>{ingredient.macros.protein}</TableCell>
-                    <TableCell>{ingredient.macros.carbs}</TableCell>
-                    <TableCell>{ingredient.macros.fat}</TableCell>
-                    <TableCell>${ingredient.price.toFixed(2)}</TableCell>
-                    <TableCell>
+                    <TableCell sx={{ color: theme.palette.error.main }}>{ingredient.macros.calories}</TableCell>
+                    <TableCell sx={{ color: theme.palette.info.main }}>{ingredient.macros.protein}</TableCell>
+                    <TableCell sx={{ color: theme.palette.warning.main }}>{ingredient.macros.carbs}</TableCell>
+                    <TableCell sx={{ color: '#FFA726' }}>{ingredient.macros.fat}</TableCell>
+                    <TableCell sx={{ color: theme.palette.success.main, fontWeight: 'medium' }}>
+                      ${ingredient.price.toFixed(2)}
+                    </TableCell>
+                    <TableCell align="center">
                       <IconButton 
-                        color="primary" 
+                        color="success" 
                         onClick={() => handleOpenForm(ingredient)}
                         aria-label="edit"
+                        size="small"
+                        sx={{
+                          boxShadow: `0 0 8px ${alpha(theme.palette.success.main, 0.2)}`,
+                          mr: 1,
+                          '&:hover': {
+                            background: alpha(theme.palette.success.main, 0.1),
+                            boxShadow: `0 0 12px ${alpha(theme.palette.success.main, 0.4)}`,
+                          }
+                        }}
                       >
-                        <EditIcon />
+                        <EditIcon fontSize="small" />
                       </IconButton>
                       <IconButton 
                         color="error" 
                         onClick={() => handleOpenDeleteDialog(ingredient)}
                         aria-label="delete"
+                        size="small"
+                        sx={{
+                          boxShadow: `0 0 8px ${alpha(theme.palette.error.main, 0.2)}`,
+                          '&:hover': {
+                            background: alpha(theme.palette.error.main, 0.1),
+                            boxShadow: `0 0 12px ${alpha(theme.palette.error.main, 0.4)}`,
+                          }
+                        }}
                       >
-                        <DeleteIcon />
+                        <DeleteIcon fontSize="small" />
                       </IconButton>
                     </TableCell>
                   </TableRow>
