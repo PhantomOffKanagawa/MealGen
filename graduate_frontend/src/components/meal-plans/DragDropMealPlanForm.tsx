@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { DragDropProvider } from '@dnd-kit/react';
 import { move } from '@dnd-kit/helpers';
+import { UniqueIdentifier } from '@dnd-kit/core';
 import { 
   Box, 
   Dialog, 
@@ -16,17 +17,53 @@ import {
   Typography,
   CircularProgress,
   Divider,
-  IconButton
+  IconButton,
+  useTheme,
+  alpha
 } from '@mui/material';
-import NutritionTracker from '@/components/dnd/NutritionTracker';
+import NutritionTracker from '@/components/meal-plans/NutritionTracker';
 import CloseIcon from '@mui/icons-material/Close';
 import SaveIcon from '@mui/icons-material/Save';
 import AddIcon from '@mui/icons-material/Add';
-import { MealPlan, MealPlanItem } from '@/services/mealPlanService';
-import { Ingredient } from '@/services/ingredientService';
-import { Meal } from '@/services/mealService';
+import { MealPlan, MealPlanItem } from '../../services/mealPlanService';
+import { Ingredient } from '../../services/ingredientService';
+import { Meal } from '../../services/mealService';
 import { Column } from '@/components/dnd/Column';
 import { Item } from '@/components/dnd/Item';
+
+// Define TypeScript interfaces for the component data structures
+interface ItemData {
+  id: string;
+  name: string;
+  type: 'ingredient' | 'meal';
+  calories: number;
+  price: number;
+  macros: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
+}
+
+interface ColumnData {
+  id: string;
+  title: string;
+  type: 'ingredient-store' | 'meal-store' | 'meal-plan';
+  isFixed: boolean;
+}
+
+interface ItemsState {
+  [key: string]: string[];
+}
+
+interface ColumnsState {
+  [key: string]: ColumnData;
+}
+
+interface ItemQuantities {
+  [key: string]: number;
+}
 
 interface DragDropMealPlanFormProps {
   open: boolean;
@@ -82,17 +119,17 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
   }, [ingredients, meals]);
 
   // Default column structures
-  const defaultColumns = useMemo(() => ({
+  const defaultColumns: ColumnsState = useMemo(() => ({
     'ingredients-store': {
       id: 'ingredients-store',
       title: 'Ingredients',
-      type: 'ingredient-store',
+      type: 'ingredient-store' as const,
       isFixed: true
     },
     'meals-store': {
       id: 'meals-store',
       title: 'Meals',
-      type: 'meal-store',
+      type: 'meal-store' as const,
       isFixed: true
     },
   }), []);
@@ -107,10 +144,10 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
   const [initialized, setInitialized] = useState(false);
   
   // Structure to hold item IDs for each column
-  const [items, setItems] = useState(defaultItems);
+  const [items, setItems] = useState<ItemsState>(defaultItems);
   
   // Store column data
-  const [columns, setColumns] = useState(defaultColumns);
+  const [columns, setColumns] = useState<ColumnsState>(defaultColumns);
     // Column orders
   const [storeColumnOrder] = useState(['ingredients-store', 'meals-store']);
   const [mealPlanOrder, setMealPlanOrder] = useState<string[]>([]);
@@ -122,7 +159,7 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
   const [previouslyOpen, setPreviouslyOpen] = useState(false);
   
   // Track item quantities for meal plan items
-  const [itemQuantities, setItemQuantities] = useState<{[itemId: string]: number}>({});
+  const [itemQuantities, setItemQuantities] = useState<ItemQuantities>({});
   
   // Track total nutrition for display in the summary
   const [totalNutrition, setTotalNutrition] = useState({
@@ -150,7 +187,7 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
 
         // Create new columns and items structures (don't modify existing state)
         const newColumns = { ...defaultColumns };
-        const newItems = {
+        const newItems: { [key: string]: string[] } = {
           'ingredients-store': [...defaultItems['ingredients-store']],
           'meals-store': [...defaultItems['meals-store']],
         };

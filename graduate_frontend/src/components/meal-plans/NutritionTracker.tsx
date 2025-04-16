@@ -28,7 +28,7 @@ const NutritionTracker: React.FC<NutritionTrackerProps> = ({ nutrition }) => {
       <Divider sx={{ my: 1 }} />
       
       <Grid container spacing={2}>
-        <Grid item xs={12} md={6} lg={4}>
+        <Grid size={12} >
           <Box display="flex" flexDirection="column" alignItems="center">
             <Typography variant="h4" fontWeight="bold" color="error">
               {formatNumber(nutrition.calories)}
@@ -39,7 +39,7 @@ const NutritionTracker: React.FC<NutritionTrackerProps> = ({ nutrition }) => {
           </Box>
         </Grid>
         
-        <Grid item xs={4} md={2} lg={2}>
+        <Grid size={4} >
           <Box display="flex" flexDirection="column" alignItems="center">
             <Typography variant="h5" fontWeight="bold" color="primary">
               {formatNumber(nutrition.protein)}g
@@ -50,7 +50,7 @@ const NutritionTracker: React.FC<NutritionTrackerProps> = ({ nutrition }) => {
           </Box>
         </Grid>
         
-        <Grid item xs={4} md={2} lg={2}>
+        <Grid size={4} >
           <Box display="flex" flexDirection="column" alignItems="center">
             <Typography variant="h5" fontWeight="bold" sx={{ color: '#FFA726' }}>
               {formatNumber(nutrition.carbs)}g
@@ -61,7 +61,7 @@ const NutritionTracker: React.FC<NutritionTrackerProps> = ({ nutrition }) => {
           </Box>
         </Grid>
         
-        <Grid item xs={4} md={2} lg={2}>
+        <Grid size={4} >
           <Box display="flex" flexDirection="column" alignItems="center">
             <Typography variant="h5" fontWeight="bold" sx={{ color: '#66BB6A' }}>
               {formatNumber(nutrition.fat)}g
@@ -72,7 +72,7 @@ const NutritionTracker: React.FC<NutritionTrackerProps> = ({ nutrition }) => {
           </Box>
         </Grid>
         
-        <Grid item xs={12} md={12} lg={2}>
+        <Grid size={12}>
           <Box display="flex" flexDirection="column" alignItems="center">
             <Typography variant="h5" fontWeight="bold" color="success.dark">
               ${formatNumber(nutrition.price)}
