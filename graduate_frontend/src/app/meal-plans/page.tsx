@@ -31,7 +31,7 @@ import MealPlanTable from '../../components/meal-plans/MealPlanTable';
 import DeleteConfirmationDialog from '../../components/meal-plans/DeleteConfirmationDialog';
 import NotificationSnackbar from '../../components/meal-plans/NotificationSnackbar';
 import MealPlanForm from '@/components/meal-plans/MealPlanForm';
-import DragDropMealPlanForm from '@/components/meal-plans/DragDropMealPlanForm';
+import DragDropMealPlanForm from '@/components/dnd/DragDropMealPlanForm';
 
 /** Default meal plan structure for creating new plans */
 const defaultMealPlan: MealPlan = {

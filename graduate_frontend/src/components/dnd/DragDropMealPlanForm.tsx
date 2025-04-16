@@ -19,7 +19,7 @@ import {
   Divider,
   IconButton,
   useTheme,
-  alpha
+  alpha,
 } from '@mui/material';
 import NutritionTracker from '@/components/meal-plans/NutritionTracker';
 import CloseIcon from '@mui/icons-material/Close';
@@ -181,9 +181,18 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
         
         // Get unique groups from current meal plan
         const uniqueGroups = new Set<string>();
-        currentMealPlan.items.forEach(item => {
-          uniqueGroups.add(item.group || 'General');
-        });
+
+        if (Object.keys(currentMealPlan.items).length === 0) {
+          // Initialize items and columns if not already done
+          const defaultGroups = ["Breakfast", "Lunch", "Dinner"];
+          defaultGroups.forEach(group => {
+            uniqueGroups.add(group);
+          });
+        } else {
+          currentMealPlan.items.forEach(item => {
+            uniqueGroups.add(item.group || 'General');
+          });
+        }
 
         // Create new columns and items structures (don't modify existing state)
         const newColumns = { ...defaultColumns };
@@ -429,32 +438,74 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
     onSubmit();
   };
 
-  return (
-    <Dialog 
+  return (    
+    <>
+  <Dialog 
       open={open} 
       onClose={onClose}
       fullScreen
       PaperProps={{
-        sx: { bgcolor: 'background.default' }
+        sx: { 
+          bgcolor: 'background.default',
+          backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.4)), radial-gradient(circle at 50% 0%, rgba(45, 55, 72, 0.3), rgba(17, 24, 39, 0.4))',
+          backgroundAttachment: 'fixed'
+        }
       }}
     >
-      <AppBar position="static" sx={{ position: 'relative' }}>
+      <AppBar 
+        position="static" 
+        sx={{ 
+          position: 'relative',
+          background: theme => `linear-gradient(90deg, ${alpha(theme.palette.primary.dark, 0.95)}, ${alpha(theme.palette.primary.main, 0.9)})`,
+          boxShadow: theme => `0 0 20px ${alpha(theme.palette.primary.main, 0.5)}`
+        }}
+      >
         <Toolbar>
           <IconButton
             edge="start"
             color="inherit"
             onClick={onClose}
             aria-label="close"
+            sx={{
+              '&:hover': {
+                bgcolor: theme => alpha(theme.palette.common.white, 0.15),
+                transform: 'scale(1.05)'
+              },
+              transition: 'all 0.2s ease'
+            }}
           >
             <CloseIcon />
           </IconButton>
-          <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
+          <Typography 
+            sx={{ 
+              ml: 2, 
+              flex: 1, 
+              fontWeight: 'bold',
+              textShadow: theme => `0 0 10px ${alpha(theme.palette.common.white, 0.4)}`
+            }} 
+            variant="h6" 
+            component="div"
+          >
             {isEditing ? 'Edit Meal Plan' : 'Create New Meal Plan'}
           </Typography>
           <Button 
             color="inherit" 
             startIcon={<AddIcon />}
             onClick={addNewGroup}
+            sx={{
+              borderRadius: 2,
+              px: 2,
+              py: 1,
+              mr: 1,
+              bgcolor: theme => alpha(theme.palette.common.white, 0.1),
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              '&:hover': {
+                bgcolor: theme => alpha(theme.palette.common.white, 0.2),
+                boxShadow: '0 0 15px rgba(255, 255, 255, 0.2)'
+              },
+              transition: 'all 0.2s ease'
+            }}
           >
             Add Group
           </Button>
@@ -463,13 +514,36 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
             startIcon={<SaveIcon />}
             onClick={saveMealPlan}
             disabled={loading}
+            sx={{
+              borderRadius: 2,
+              px: 2,
+              py: 1,
+              bgcolor: theme => alpha(theme.palette.common.white, 0.2),
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              boxShadow: '0 0 10px rgba(255, 255, 255, 0.15)',
+              '&:hover': {
+                bgcolor: theme => alpha(theme.palette.common.white, 0.3),
+                boxShadow: '0 0 20px rgba(255, 255, 255, 0.3)'
+              },
+              '&.Mui-disabled': {
+                bgcolor: theme => alpha(theme.palette.common.white, 0.05),
+              },
+              transition: 'all 0.2s ease'
+            }}
           >
             Save
           </Button>
         </Toolbar>
       </AppBar>
 
-      <DialogContent sx={{ p: 3 }}>
+      <DialogContent 
+        sx={{ 
+          p: 3,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}        >
+        
         <TextField
           autoFocus
           margin="dense"
@@ -481,7 +555,35 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
           variant="outlined"
           value={mealPlanName}
           onChange={(e) => setMealPlanName(e.target.value)}
-          sx={{ mb: 2 }}
+          sx={{ 
+            mb: 3,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 2,
+              backgroundColor: theme => alpha(theme.palette.background.paper, 0.8),
+              backdropFilter: 'blur(8px)',
+              '& fieldset': {
+                borderColor: theme => alpha(theme.palette.primary.main, 0.4),
+                borderWidth: 2,
+              },
+              '&:hover fieldset': {
+                borderColor: theme => alpha(theme.palette.primary.main, 0.6),
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: theme => theme.palette.primary.main,
+                boxShadow: theme => `0 0 10px ${alpha(theme.palette.primary.main, 0.4)}`,
+              }
+            },
+            '& .MuiInputLabel-root': {
+              color: 'text.secondary',
+              '&.Mui-focused': {
+                color: 'primary.main'
+              }
+            },
+            '& .MuiInputBase-input': {
+              fontSize: '1.1rem',
+              fontWeight: 500
+            }
+          }}
         />
         
         {/* Nutrition Tracker Summary */}
@@ -617,6 +719,7 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
         </Button>
       </DialogActions>
     </Dialog>
+    </>
   );
 };
 

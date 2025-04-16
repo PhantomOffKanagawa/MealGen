@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {CollisionPriority} from '@dnd-kit/abstract';
 import {useSortable} from '@dnd-kit/react/sortable';
-import { Paper, Typography, Box, Divider, TextField, IconButton, Tooltip } from '@mui/material';
+import { Paper, Typography, Box, Divider, TextField, IconButton, Tooltip, useTheme, alpha } from '@mui/material';
 import FastfoodIcon from '@mui/icons-material/Fastfood';
 import KitchenIcon from '@mui/icons-material/Kitchen';
 import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
@@ -22,6 +22,7 @@ interface ColumnProps {
 export function Column({children, id, index, title, type, onTitleChange, onDelete}: ColumnProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(title);
+  const theme = useTheme();
   
   const isFixedStore = type === 'ingredient-store' || type === 'meal-store';
   
@@ -62,17 +63,16 @@ export function Column({children, id, index, title, type, onTitleChange, onDelet
         return null;
     }
   };
-
   const getColumnColor = () => {
     switch (type) {
       case 'ingredient-store':
-        return '#66bb6a';
+        return theme.palette.success.main;
       case 'meal-store':
-        return '#7e57c2';
+        return theme.palette.secondary.main;
       case 'meal-plan':
-        return '#42a5f5';
+        return theme.palette.primary.main;
       default:
-        return '#9e9e9e';
+        return theme.palette.grey[500];
     }
   };
 
@@ -102,24 +102,44 @@ export function Column({children, id, index, title, type, onTitleChange, onDelet
     }
   };
 
-  return (
-    <Paper
+  return (    <Paper
       ref={ref}
-      elevation={2}
+      elevation={3}
       sx={{
         width: '100%',
         minHeight: isFixedStore ? 400 : 250,
         maxHeight: isFixedStore ? 500 : 'auto',
         margin: '10px 0',
-        backgroundColor: '#ffffff',
+        backgroundColor: alpha(theme.palette.background.paper, 0.9),
         borderRadius: 2,
         overflow: 'hidden',
         cursor: isFixedStore ? 'default' : 'move',
         display: 'flex',
         flexDirection: 'column',
+        border: `1px solid ${alpha(getColumnColor(), 0.4)}`,
+        transition: 'all 0.3s ease-in-out',
+        position: 'relative',
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          borderRadius: 2,
+          pointerEvents: 'none',
+          boxShadow: `0 0 15px ${alpha(getColumnColor(), 0.3)}`,
+          opacity: 0,
+          transition: 'opacity 0.3s ease-in-out'
+        },
+        '&:hover': {
+          boxShadow: `0 6px 20px ${alpha(getColumnColor(), 0.25)}`,
+          '&::after': {
+            opacity: 1
+          }
+        }
       }}
-    >
-      <Box 
+    >      <Box 
         sx={{ 
           bgcolor: getColumnColor(),
           color: 'white',
@@ -127,7 +147,10 @@ export function Column({children, id, index, title, type, onTitleChange, onDelet
           display: 'flex',
           alignItems: 'center',
           gap: 1,
-          position: 'relative'
+          position: 'relative',
+          boxShadow: `0 0 15px ${alpha(getColumnColor(), 0.7)}`,
+          borderBottom: `1px solid ${alpha(getColumnColor(), 0.8)}`,
+          backdropFilter: 'blur(8px)'
         }}
         onClick={!isEditing && !isFixedStore ? handleStartEdit : undefined}
       >
@@ -152,14 +175,14 @@ export function Column({children, id, index, title, type, onTitleChange, onDelet
                   '&::placeholder': {
                     color: 'rgba(255, 255, 255, 0.7)',
                   }
-                },
-                '& .MuiFilledInput-root': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                },                '& .MuiFilledInput-root': {
+                  backgroundColor: alpha(theme.palette.common.white, 0.15),
+                  backdropFilter: 'blur(4px)',
                   '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                    backgroundColor: alpha(theme.palette.common.white, 0.25),
                   },
                   '&.Mui-focused': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                    backgroundColor: alpha(theme.palette.common.white, 0.25),
                   }
                 },
                 '& .MuiFilledInput-underline:before': {
@@ -232,19 +255,19 @@ export function Column({children, id, index, title, type, onTitleChange, onDelet
       }}>
         {React.Children.count(children) > 0 ? (
           children
-        ) : (
-          <Box 
+        ) : (          <Box 
             sx={{ 
               height: '100%', 
               minHeight: 120,
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center',
-              border: '2px dashed #ccc',
+              border: `2px dashed ${alpha(theme.palette.divider, 0.3)}`,
               borderRadius: 1,
               p: 2,
               color: 'text.secondary',
-              textAlign: 'center'
+              textAlign: 'center',
+              backgroundColor: alpha(theme.palette.background.default, 0.4)
             }}
           >
             <Typography variant="body2">

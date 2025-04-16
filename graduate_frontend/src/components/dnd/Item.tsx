@@ -9,7 +9,9 @@ import {
   Avatar, 
   IconButton, 
   TextField,
-  ButtonGroup
+  ButtonGroup,
+  useTheme,
+  alpha
 } from '@mui/material';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import KitchenIcon from '@mui/icons-material/Kitchen';
@@ -29,6 +31,7 @@ interface ItemProps {
 }
 
 export function Item({ id, index, column, type, name, calories, image, quantity = 1, onQuantityChange }: ItemProps) {
+  const theme = useTheme();
   const {ref, isDragging} = useSortable({
     id,
     index,
@@ -60,28 +63,70 @@ export function Item({ id, index, column, type, name, calories, image, quantity 
       onQuantityChange(id, newQuantity);
     }
   };
-
-  return (
-    <Card 
+  return (    <Card 
       ref={ref}
       sx={{
         margin: '8px',
         opacity: isDragging ? 0.5 : 1,
         transform: isDragging ? 'scale(1.05)' : 'scale(1)',
-        transition: 'all 0.2s',
-        boxShadow: isDragging ? '0 0 10px rgba(0,0,0,0.3)' : '0 1px 3px rgba(0,0,0,0.1)',
+        transition: 'all 0.3s ease',
+        boxShadow: isDragging 
+          ? `0 0 15px ${alpha(isIngredient ? theme.palette.success.main : theme.palette.secondary.main, 0.5)}` 
+          : `0 2px 8px ${alpha(isIngredient ? theme.palette.success.main : theme.palette.secondary.main, 0.2)}`,
         cursor: 'grab',
-        backgroundColor: isIngredient ? '#f5fbf1' : '#f8f4ff',
-        borderLeft: isIngredient ? '4px solid #66bb6a' : '4px solid #7e57c2',
-        color: isIngredient ? '#66bb6a' : '#7e57c2',
+        backgroundColor: alpha(theme.palette.background.paper, 0.8),
+        backdropFilter: 'blur(8px)',
+        border: isIngredient 
+          ? `1px solid ${alpha(theme.palette.success.main, 0.4)}` 
+          : `1px solid ${alpha(theme.palette.secondary.main, 0.4)}`,
+        borderLeft: isIngredient 
+          ? `4px solid ${theme.palette.success.main}` 
+          : `4px solid ${theme.palette.secondary.main}`,
+        color: isIngredient 
+          ? theme.palette.success.main 
+          : theme.palette.secondary.main,
+        position: 'relative',
+        overflow: 'hidden',
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          inset: 0,
+          opacity: 0,
+          transition: 'opacity 0.3s ease',
+          boxShadow: `inset 0 0 10px ${alpha(isIngredient ? theme.palette.success.main : theme.palette.secondary.main, 0.4)}`,
+          pointerEvents: 'none'
+        },
+        '&:hover': {
+          boxShadow: `0 4px 15px ${alpha(isIngredient ? theme.palette.success.main : theme.palette.secondary.main, 0.4)}`,
+          transform: 'translateY(-2px)',
+          '&::after': {
+            opacity: 1
+          }
+        }
       }}
     >
       <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-        <Box display="flex" alignItems="center" gap={1}>
-          {image ? (
-            <Avatar src={image} alt={name} sx={{ width: 40, height: 40 }} />
+        <Box display="flex" alignItems="center" gap={1}>          {image ? (
+            <Avatar 
+              src={image} 
+              alt={name} 
+              sx={{ 
+                width: 40, 
+                height: 40,
+                boxShadow: `0 0 0 2px ${alpha(isIngredient ? theme.palette.success.main : theme.palette.secondary.main, 0.3)}`
+              }} 
+            />
           ) : (
-            <Avatar sx={{ bgcolor: isIngredient ? '#66bb6a' : '#7e57c2', width: 40, height: 40 }}>
+            <Avatar 
+              sx={{ 
+                bgcolor: isIngredient 
+                  ? alpha(theme.palette.success.main, 0.8) 
+                  : alpha(theme.palette.secondary.main, 0.8), 
+                width: 40, 
+                height: 40,
+                backdropFilter: 'blur(8px)'
+              }}
+            >
               {isIngredient ? <KitchenIcon /> : <RestaurantIcon />}
             </Avatar>
           )}
@@ -92,13 +137,25 @@ export function Item({ id, index, column, type, name, calories, image, quantity 
             <Box display="flex" justifyContent="space-between" alignItems="center">
               <Typography variant="caption" color="text.secondary">
                 {isIngredient ? 'Ingredient' : 'Meal'}
-              </Typography>
-              {calories && (
+              </Typography>              {calories && (
                 <Chip 
                   label={`${calories * itemQuantity} cal`} 
                   size="small" 
                   variant="outlined"
-                  sx={{ color: isIngredient ? '#66bb6a' : '#7e57c2', height: 20, fontSize: '0.65rem' }} 
+                  sx={{ 
+                    color: isIngredient ? theme.palette.success.main : theme.palette.secondary.main,
+                    borderColor: isIngredient 
+                      ? alpha(theme.palette.success.main, 0.5) 
+                      : alpha(theme.palette.secondary.main, 0.5),
+                    height: 20, 
+                    fontSize: '0.65rem',
+                    backdropFilter: 'blur(4px)',
+                    '&:hover': { 
+                      backgroundColor: isIngredient 
+                        ? alpha(theme.palette.success.main, 0.1) 
+                        : alpha(theme.palette.secondary.main, 0.1) 
+                    }
+                  }} 
                 />
               )}
             </Box>
@@ -106,18 +163,50 @@ export function Item({ id, index, column, type, name, calories, image, quantity 
         </Box>
         
         {/* Quantity controls - only show for items in meal plans (not in stores) */}
-        {showQuantityControls && (
-          <Box mt={1} display="flex" justifyContent="flex-end" alignItems="center" gap={1}>
+        {showQuantityControls && (          <Box mt={1} display="flex" justifyContent="flex-end" alignItems="center" gap={1}>
             <Typography variant="caption" color="text.secondary">
               Quantity:
             </Typography>
-            <ButtonGroup size="small" variant="outlined" color={isIngredient ? "success" : "secondary"}>
-              <IconButton 
+            <ButtonGroup 
+              size="small" 
+              variant="outlined" 
+              color={isIngredient ? "success" : "secondary"}
+              sx={{
+                borderRadius: '8px',
+                '& .MuiButtonGroup-grouped': {
+                  border: isIngredient 
+                    ? `1px solid ${alpha(theme.palette.success.main, 0.5)}` 
+                    : `1px solid ${alpha(theme.palette.secondary.main, 0.5)}`
+                }
+              }}
+            >              <IconButton 
                 size="small" 
                 onClick={() => handleQuantityChange(itemQuantity - 1)}
                 disabled={itemQuantity <= 1}
+                sx={{
+                  backgroundColor: alpha(theme.palette.background.paper, 0.8),
+                  backdropFilter: 'blur(8px)',
+                  width: '28px',
+                  height: '28px',
+                  minWidth: '28px',
+                  borderRadius: '4px',
+                  border: `1px solid ${alpha(isIngredient ? theme.palette.success.main : theme.palette.secondary.main, 0.5)}`,
+                  boxShadow: `0 0 5px ${alpha(isIngredient ? theme.palette.success.main : theme.palette.secondary.main, 0.2)}`,
+                  color: isIngredient ? theme.palette.success.main : theme.palette.secondary.main,
+                  padding: 0,
+                  '&:hover': {
+                    backgroundColor: isIngredient 
+                      ? alpha(theme.palette.success.main, 0.15) 
+                      : alpha(theme.palette.secondary.main, 0.15),
+                    boxShadow: `0 0 8px ${alpha(isIngredient ? theme.palette.success.main : theme.palette.secondary.main, 0.4)}`
+                  },
+                  '&:disabled': {
+                    opacity: 0.3,
+                    boxShadow: 'none'
+                  }
+                }}
               >
-                <RemoveIcon fontSize="small" />
+                <RemoveIcon style={{ fontSize: '16px' }} />
               </IconButton>
               
               <TextField
@@ -125,13 +214,30 @@ export function Item({ id, index, column, type, name, calories, image, quantity 
                 value={itemQuantity}
                 onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 1)}
                 inputProps={{ 
-                  style: { width: '40px', padding: '2px 4px', textAlign: 'center' },
+                  style: { 
+                    width: '32px', 
+                    padding: '2px 0px', 
+                    textAlign: 'center',
+                    color: isIngredient 
+                      ? theme.palette.success.main 
+                      : theme.palette.secondary.main,
+                    fontWeight: 'bold'
+                  },
                   min: 1,
                   max: 99
                 }}
                 sx={{
+                  margin: '0 4px',
+                  backgroundColor: alpha(theme.palette.background.paper, 0.9),
+                  borderRadius: '4px',
+                  border: `1px solid ${alpha(isIngredient ? theme.palette.success.main : theme.palette.secondary.main, 0.5)}`,
+                  boxShadow: `0 0 5px ${alpha(isIngredient ? theme.palette.success.main : theme.palette.secondary.main, 0.2)}`,
                   '& .MuiOutlinedInput-root': {
+                    height: '28px',
                     '& fieldset': { border: 'none' },
+                    '&:hover': {
+                      boxShadow: `0 0 8px ${alpha(isIngredient ? theme.palette.success.main : theme.palette.secondary.main, 0.4)}`
+                    }
                   }
                 }}
               />
@@ -139,8 +245,26 @@ export function Item({ id, index, column, type, name, calories, image, quantity 
               <IconButton 
                 size="small" 
                 onClick={() => handleQuantityChange(itemQuantity + 1)}
+                sx={{
+                  backgroundColor: alpha(theme.palette.background.paper, 0.8),
+                  backdropFilter: 'blur(8px)',
+                  width: '28px',
+                  height: '28px',
+                  minWidth: '28px',
+                  borderRadius: '4px',
+                  border: `1px solid ${alpha(isIngredient ? theme.palette.success.main : theme.palette.secondary.main, 0.5)}`,
+                  boxShadow: `0 0 5px ${alpha(isIngredient ? theme.palette.success.main : theme.palette.secondary.main, 0.2)}`,
+                  color: isIngredient ? theme.palette.success.main : theme.palette.secondary.main,
+                  padding: 0,
+                  '&:hover': {
+                    backgroundColor: isIngredient 
+                      ? alpha(theme.palette.success.main, 0.15) 
+                      : alpha(theme.palette.secondary.main, 0.15),
+                    boxShadow: `0 0 8px ${alpha(isIngredient ? theme.palette.success.main : theme.palette.secondary.main, 0.4)}`
+                  }
+                }}
               >
-                <AddIcon fontSize="small" />
+                <AddIcon style={{ fontSize: '16px' }} />
               </IconButton>
             </ButtonGroup>
           </Box>
