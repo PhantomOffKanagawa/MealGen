@@ -158,7 +158,7 @@ async function startServer() {
   const PORT = process.env.PORT || 4000;
   httpServer.listen(PORT, () => {
     console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`);
-    console.log(`🚀 Web sockets ready at ws://localhost:${PORT}/graphql`);
+    console.log(`🕸️ Web sockets ready at ws://localhost:${PORT}/graphql`);
     console.log(`🔒 Authentication enabled`);
   });
 }
