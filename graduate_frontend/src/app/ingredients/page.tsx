@@ -3,14 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { 
-  Container, Typography, Box, Button, Table, TableBody, 
-  TableCell, TableContainer, TableHead, TableRow, Paper,
-  IconButton, Dialog, DialogActions, DialogContent, DialogTitle,
-  TextField, Grid, CircularProgress, Snackbar, Alert
+  Container, Box, CircularProgress, Snackbar, Alert,
+  useTheme, alpha, Typography, Card, CardContent, Grid
 } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
+import KitchenIcon from '@mui/icons-material/Kitchen';
 import graphqlClient from '../../services/graphql';
 import { 
   getAllIngredients, 
@@ -20,10 +16,17 @@ import {
   Ingredient 
 } from '../../services/ingredientService';
 import { useAuth } from '../../context/AuthContext';
+import PageHeader from '@/components/PageHeader';
+import DataTable from '@/components/DataTable';
+import { Column } from '@/components/DataTable';
+import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog';
 
 // Fix for hydration issues - load these components only on client side
-const ClientDialog = dynamic(() => Promise.resolve(Dialog), { ssr: false });
 const ClientSnackbar = dynamic(() => Promise.resolve(Snackbar), { ssr: false });
+const IngredientEditDialog = dynamic(
+  () => import('@/components/ingredients/IngredientEditDialog'), 
+  { ssr: false }
+);
 
 const defaultIngredient: Ingredient = {
   _id: '',
@@ -41,7 +44,8 @@ const defaultIngredient: Ingredient = {
 };
 
 const IngredientsPage: React.FC = () => {
-  const { user, logout, loading } = useAuth();
+  const { user, loading } = useAuth();
+  const theme = useTheme();
 
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [pageLoading, setPageLoading] = useState(true);
@@ -202,6 +206,42 @@ const IngredientsPage: React.FC = () => {
     });
   };
 
+  // Define table columns with unique ids
+  const columns: Column[] = [
+    { 
+      id: 'name', 
+      label: 'Name',
+      format: (value) => <span style={{ fontWeight: 'medium' }}>{value}</span>
+    },
+    { id: 'quantity', label: 'Quantity' },
+    { id: 'unit', label: 'Unit' },
+    { 
+      id: 'macros.calories', 
+      label: 'Calories',
+      format: (value, row) => <span style={{ color: theme.palette.error.main }}>{row.macros.calories}</span>
+    },
+    { 
+      id: 'macros.protein', 
+      label: 'Protein (g)',
+      format: (value, row) => <span style={{ color: theme.palette.info.main }}>{row.macros.protein}</span>
+    },
+    { 
+      id: 'macros.carbs', 
+      label: 'Carbs (g)',
+      format: (value, row) => <span style={{ color: theme.palette.warning.main }}>{row.macros.carbs}</span>
+    },
+    { 
+      id: 'macros.fat', 
+      label: 'Fat (g)',
+      format: (value, row) => <span style={{ color: '#FFA726' }}>{row.macros.fat}</span>
+    },
+    { 
+      id: 'price', 
+      label: 'Price',
+      format: (value) => <span style={{ color: theme.palette.success.main, fontWeight: 'medium' }}>${value.toFixed(2)}</span>
+    }
+  ];
+
   if (!isMounted) {
     return (
       <Container>
@@ -213,239 +253,126 @@ const IngredientsPage: React.FC = () => {
   }
 
   return (
-    <Container>
-      <Box sx={{ my: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          My Ingredients
-        </Typography>
-        
-        <Button 
-          variant="contained" 
-          color="primary" 
-          startIcon={<AddIcon />}
-          onClick={() => handleOpenForm()}
-          sx={{ mb: 3 }}
-        >
-          Add New Ingredient
-        </Button>
-        
-        {loading && pageLoading && !openForm && !openDeleteDialog ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-            <CircularProgress />
-          </Box>
-        ) : error ? (
-          <Alert severity="error" sx={{ my: 2 }}>{error}</Alert>
-        ) : ingredients.length === 0 ? (
-          <Alert severity="info" sx={{ my: 2 }}>
-            You don't have any ingredients yet. Create your first one!
-          </Alert>
-        ) : (
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Quantity</TableCell>
-                  <TableCell>Unit</TableCell>
-                  <TableCell>Calories</TableCell>
-                  <TableCell>Protein (g)</TableCell>
-                  <TableCell>Carbs (g)</TableCell>
-                  <TableCell>Fat (g)</TableCell>
-                  <TableCell>Price</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {ingredients.map((ingredient) => (
-                  <TableRow key={ingredient._id}>
-                    <TableCell>{ingredient.name}</TableCell>
-                    <TableCell>{ingredient.quantity}</TableCell>
-                    <TableCell>{ingredient.unit}</TableCell>
-                    <TableCell>{ingredient.macros.calories}</TableCell>
-                    <TableCell>{ingredient.macros.protein}</TableCell>
-                    <TableCell>{ingredient.macros.carbs}</TableCell>
-                    <TableCell>{ingredient.macros.fat}</TableCell>
-                    <TableCell>${ingredient.price.toFixed(2)}</TableCell>
-                    <TableCell>
-                      <IconButton 
-                        color="primary" 
-                        onClick={() => handleOpenForm(ingredient)}
-                        aria-label="edit"
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton 
-                        color="error" 
-                        onClick={() => handleOpenDeleteDialog(ingredient)}
-                        aria-label="delete"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-
-        {/* Create/Edit Ingredient Form Dialog */}
-        <ClientDialog open={openForm} onClose={handleCloseForm} maxWidth="sm" fullWidth>
-          <DialogTitle>
-            {isEditing ? 'Edit Ingredient' : 'Add New Ingredient'}
-          </DialogTitle>
-          <form onSubmit={handleSubmit}>
-            <DialogContent>
-              <Grid container spacing={2}>
-                <Grid>
-                  <TextField
-                    autoFocus
-                    name="name"
-                    label="Ingredient Name"
-                    fullWidth
-                    required
-                    value={currentIngredient.name}
-                    onChange={handleChange}
-                  />
-                </Grid>
-                <Grid>
-                  <TextField
-                    name="quantity"
-                    label="Quantity"
-                    type="number"
-                    fullWidth
-                    value={currentIngredient.quantity}
-                    onChange={handleChange}
-                    slotProps={{ htmlInput: { min: 0, step: "any" } }}
-                  />
-                </Grid>
-                <Grid>
-                  <TextField
-                    name="unit"
-                    label="Unit"
-                    fullWidth
-                    required
-                    value={currentIngredient.unit}
-                    onChange={handleChange}
-                  />
-                </Grid>
-                <Grid size={12}>
-                  <Typography variant="subtitle1" gutterBottom sx={{ mt: 1 }}>
-                    Nutritional Information (per 100g/ml)
-                  </Typography>
-                </Grid>
-                <Grid size={6}>
-                  <TextField
-                    name="macros.calories"
-                    label="Calories"
-                    type="number"
-                    fullWidth
-                    required
-                    value={currentIngredient.macros.calories}
-                    onChange={handleChange}
-                    slotProps={{ htmlInput: { min: 0, step: "any" } }}
-                  />
-                </Grid>
-                <Grid size={6}>
-                  <TextField
-                    name="macros.protein"
-                    label="Protein (g)"
-                    type="number"
-                    fullWidth
-                    required
-                    value={currentIngredient.macros.protein}
-                    onChange={handleChange}
-                    slotProps={{ htmlInput: { min: 0, step: "any" } }}
-                  />
-                </Grid>
-                <Grid size={6}>
-                  <TextField
-                    name="macros.carbs"
-                    label="Carbs (g)"
-                    type="number"
-                    fullWidth
-                    required
-                    value={currentIngredient.macros.carbs}
-                    onChange={handleChange}
-                    slotProps={{ htmlInput: { min: 0, step: "any" } }}
-                  />
-                </Grid>
-                <Grid>
-                  <TextField
-                    name="macros.fat"
-                    label="Fat (g)"
-                    type="number"
-                    fullWidth
-                    required
-                    value={currentIngredient.macros.fat}
-                    onChange={handleChange}
-                    slotProps={{ htmlInput: { min: 0, step: "any" } }}
-                  />
-                </Grid>
-                <Grid size={12}>
-                  <TextField
-                    name="price"
-                    label="Price"
-                    type="number"
-                    fullWidth
-                    value={currentIngredient.price}
-                    onChange={handleChange}
-                    slotProps={{ htmlInput: { min: 0, step: "any" } }}
-                  />
-                </Grid>
-              </Grid>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={handleCloseForm}>Cancel</Button>
-              <Button 
-                type="submit" 
-                variant="contained" 
-                color="primary"
-                disabled={loading && pageLoading}
+    <>
+      {/* Hero Section */}
+      <Box
+        sx={{
+          background: `linear-gradient(to right, ${alpha(theme.palette.success.dark, 0.9)}, ${alpha(theme.palette.success.main, 0.8)})`,
+          color: "white",
+          py: { xs: 6, md: 8 },
+          mb: 4,
+          borderRadius: { xs: 0, md: 2 },
+          boxShadow: `0 4px 20px ${alpha(theme.palette.success.main, 0.4)}`,
+        }}
+      >
+        <Container maxWidth="lg">
+          <Grid container spacing={2} alignItems="center">
+            <Grid size={12}>
+              <Typography
+                variant="h3"
+                component="h1"
+                gutterBottom
+                fontWeight="bold"
+                sx={{
+                  textShadow: `0 2px 10px ${alpha(theme.palette.common.black, 0.3)}`,
+                }}
               >
-                {(loading && pageLoading) ? <CircularProgress size={24} /> : isEditing ? 'Update' : 'Create'}
-              </Button>
-            </DialogActions>
-          </form>
-        </ClientDialog>
-
-        {/* Delete Confirmation Dialog */}
-        <ClientDialog open={openDeleteDialog} onClose={handleCloseDeleteDialog}>
-          <DialogTitle>Confirm Deletion</DialogTitle>
-          <DialogContent>
-            Are you sure you want to delete the ingredient "{currentIngredient.name}"? 
-            This action cannot be undone.
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseDeleteDialog}>Cancel</Button>
-            <Button 
-              onClick={handleDelete} 
-              color="error" 
-              variant="contained"
-              disabled={loading && pageLoading}
-            >
-              {(loading && pageLoading) ? <CircularProgress size={24} /> : 'Delete'}
-            </Button>
-          </DialogActions>
-        </ClientDialog>
-
-        {/* Snackbar for notifications */}
-        <ClientSnackbar 
-          open={snackbar.open} 
-          autoHideDuration={6000} 
-          onClose={handleCloseSnackbar}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        >
-          <Alert 
-            onClose={handleCloseSnackbar} 
-            severity={snackbar.severity}
-            sx={{ width: '100%' }}
-          >
-            {snackbar.message}
-          </Alert>
-        </ClientSnackbar>
+                Manage Your Ingredients
+              </Typography>
+              <Typography variant="h6" sx={{ mb: 2, opacity: 0.9 }}>
+                Track your food inventory, nutritional information, and costs in one place
+              </Typography>
+            </Grid>
+            <Grid size={12} sx={{ textAlign: 'center' }}>
+              <KitchenIcon sx={{ fontSize: 100, opacity: 0.9 }} />
+            </Grid>
+          </Grid>
+        </Container>
       </Box>
-    </Container>
+
+      <Container>
+        <Box sx={{ position: 'relative', minHeight: '80vh' }}>
+          <PageHeader 
+            title="My Ingredients"
+            icon={<KitchenIcon />}
+            color="success"
+            onAddNew={() => handleOpenForm()}
+            addButtonText="Add New Ingredient"
+          />
+          
+          {loading && pageLoading && !openForm && !openDeleteDialog ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : error ? (
+            <Alert severity="error" sx={{ my: 2 }}>{error}</Alert>
+          ) : ingredients.length === 0 ? (
+            <Card sx={{ 
+              my: 4, 
+              boxShadow: `0 8px 24px ${alpha(theme.palette.success.main, 0.15)}`,
+              borderRadius: 2,
+              border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
+            }}>
+              <CardContent sx={{ textAlign: 'center', py: 6 }}>
+                <KitchenIcon sx={{ fontSize: 60, color: alpha(theme.palette.success.main, 0.6), mb: 2 }} />
+                <Typography variant="h5" color="text.secondary" gutterBottom>
+                  No Ingredients Yet
+                </Typography>
+                <Typography variant="body1" color="text.secondary" paragraph>
+                  You haven't added any ingredients to your inventory. Click "Add New Ingredient" to get started.
+                </Typography>
+              </CardContent>
+            </Card>
+          ) : (
+            <DataTable 
+              columns={columns}
+              data={ingredients}
+              color="success"
+              onEdit={handleOpenForm}
+              onDelete={handleOpenDeleteDialog}
+              getRowId={(row) => row._id}
+            />
+          )}
+
+          {/* Create/Edit Ingredient Form Dialog */}
+          <IngredientEditDialog
+            open={openForm}
+            onClose={handleCloseForm}
+            onSubmit={handleSubmit}
+            ingredient={currentIngredient}
+            onChange={handleChange}
+            isEditing={isEditing}
+            loading={loading && pageLoading}
+          />
+
+          {/* Delete Confirmation Dialog */}
+          <DeleteConfirmationDialog
+            open={openDeleteDialog}
+            onClose={handleCloseDeleteDialog}
+            onConfirm={handleDelete}
+            title="Confirm Deletion"
+            message={`Are you sure you want to delete the ingredient "${currentIngredient.name}"? This action cannot be undone.`}
+            loading={loading && pageLoading}
+          />
+
+          {/* Snackbar for notifications */}
+          <ClientSnackbar 
+            open={snackbar.open} 
+            autoHideDuration={6000} 
+            onClose={handleCloseSnackbar}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          >
+            <Alert 
+              onClose={handleCloseSnackbar} 
+              severity={snackbar.severity}
+              sx={{ width: '100%' }}
+            >
+              {snackbar.message}
+            </Alert>
+          </ClientSnackbar>
+        </Box>
+      </Container>
+    </>
   );
 };
 

@@ -3,6 +3,9 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --theme-color-carbs: #911ccc;
+  --theme-color-protein: #1c8ecc;
+  --theme-color-fat: #FFA726;
 }
 
 @theme inline {

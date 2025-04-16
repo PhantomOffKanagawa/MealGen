@@ -1,18 +1,20 @@
+/**
+ * Meal Plans Page
+ * 
+ * Main page component for managing meal plans. Allows users to view, create, 
+ * edit, and delete meal plans. Meal plans can contain ingredients and meals
+ * that are organized into groups, with automatic calculation of nutritional 
+ * information and price.
+ */
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { 
-  Container, Typography, Box, Button, Table, TableBody, 
-  TableCell, TableContainer, TableHead, TableRow, Paper,
-  IconButton, Dialog, DialogActions, DialogContent, DialogTitle,
-  TextField, Grid, CircularProgress, Snackbar, Alert,
-  MenuItem, Select, FormControl, InputLabel, Tabs, Tab, Chip
+  Container, Box, CircularProgress, Snackbar, Alert,
+  useTheme, alpha, Typography, Card, CardContent, Grid
 } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
-import { useAuth } from '../../context/AuthContext';
+import RestaurantMenuIcon from '@mui/icons-material/RestaurantMenu';
 import graphqlClient from '../../services/graphql';
 import { 
   getAllMealPlans, 
@@ -20,42 +22,25 @@ import {
   updateMealPlan, 
   deleteMealPlan,
   MealPlan,
-  MealPlanItem,
-  MacroNutrients
+  MealPlanItem
 } from '../../services/mealPlanService';
 import { getAllIngredients, Ingredient } from '../../services/ingredientService';
 import { getAllMeals, Meal } from '../../services/mealService';
+import { useAuth } from '../../context/AuthContext';
+import PageHeader from '@/components/PageHeader';
+import DataTable from '@/components/DataTable';
+import { Column } from '@/components/DataTable';
+import DeleteConfirmationDialog from '@/components/DeleteConfirmationDialog';
+import DragDropMealPlanForm from '@/components/dnd/DragDropMealPlanForm';
 
 // Fix for hydration issues - load these components only on client side
-const ClientDialog = dynamic(() => Promise.resolve(Dialog), { ssr: false });
 const ClientSnackbar = dynamic(() => Promise.resolve(Snackbar), { ssr: false });
+const MealPlanEditDialog = dynamic(
+  () => import('@/components/meal-plans/MealPlanEditDialog'), 
+  { ssr: false }
+);
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`meal-plan-tabpanel-${index}`}
-      aria-labelledby={`meal-plan-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          {children}
-        </Box>
-      )}
-    </div>
-  );
-}
-
+/** Default meal plan structure for creating new plans */
 const defaultMealPlan: MealPlan = {
   _id: '',
   userId: '',
@@ -72,32 +57,30 @@ const defaultMealPlan: MealPlan = {
 
 const MealPlansPage: React.FC = () => {
   const { user, loading } = useAuth();
+  const theme = useTheme();
 
+  // State for meal plans and related data
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [meals, setMeals] = useState<Meal[]>([]);
   const [pageLoading, setPageLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // UI state management
   const [openForm, setOpenForm] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [currentMealPlan, setCurrentMealPlan] = useState<MealPlan>(defaultMealPlan);
   const [isEditing, setIsEditing] = useState(false);
-  const [tabValue, setTabValue] = useState(0);
-  const [currentItem, setCurrentItem] = useState<MealPlanItem>({
-    type: 'ingredient',
-    itemId: '',
-    quantity: 1,
-    group: 'General'
-  });
   const [availableGroups, setAvailableGroups] = useState<string[]>(['General']);
-  const [newGroup, setNewGroup] = useState('');
+  
+  // Notification state
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
-    severity: 'success' as 'success' | 'error'
+    severity: 'success' as 'success' | 'error' | 'info' | 'warning'
   });
   
-  // Use this to prevent rendering on server
+  // Client-side rendering guard
   const [isMounted, setIsMounted] = useState(false);
   
   useEffect(() => {
@@ -105,11 +88,15 @@ const MealPlansPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!loading && isMounted) {
+    if (!loading && isMounted && user) {
       fetchData();
     }
-  }, [loading, isMounted]);
+  }, [loading, isMounted, user]);
 
+  /**
+   * Fetches all required data: meal plans, ingredients, and meals
+   * Also extracts unique group names from existing meal plans
+   */
   const fetchData = async () => {
     try {
       setPageLoading(true);
@@ -170,76 +157,30 @@ const MealPlansPage: React.FC = () => {
     setOpenDeleteDialog(false);
   };
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-  };
-
-  const handleAddItem = (type: "meal" | "ingredient") => {
-    // Update the current item type
-    setCurrentItem({
-      ...currentItem,
-      type: type,
-    });
-
-    // Validate item selection
-    if (!currentItem.itemId) {
-      setSnackbar({
-        open: true,
-        message: 'Please select an item to add',
-        severity: 'error'
-      });
-      return;
-    }
-
-    // Check if the item already exists in the meal plan
-    const itemExists = currentMealPlan.items.some(
-      item => item.type === currentItem.type && item.itemId === currentItem.itemId
-    );
-
-    if (itemExists) {
-      setSnackbar({
-        open: true,
-        message: `This ${currentItem.type} is already in your meal plan`,
-        severity: 'error'
-      });
-      return;
-    }
-
-    // Add the new item to the meal plan
-    const updatedItems = [...currentMealPlan.items, currentItem];
-    
-    // Calculate updated macros and price
-    const updatedMacrosAndPrice = calculateMacrosAndPrice(updatedItems);
-    
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
     setCurrentMealPlan({
       ...currentMealPlan,
-      items: updatedItems,
-      ...updatedMacrosAndPrice
-    });
-
-    // Reset the current item form
-    setCurrentItem({
-      type: 'ingredient',
-      itemId: '',
-      quantity: 1,
-      group: 'General'
+      [name]: value
     });
   };
 
-  const handleRemoveItem = (index: number) => {
-    const updatedItems = [...currentMealPlan.items];
-    updatedItems.splice(index, 1);
-    
-    // Calculate updated macros and price
-    const updatedMacrosAndPrice = calculateMacrosAndPrice(updatedItems);
+  /**
+   * Updates the meal plan with a new set of items and recalculates nutrition
+   */
+  const handleUpdateItems = (items: MealPlanItem[]) => {
+    const updatedMacrosAndPrice = calculateMacrosAndPrice(items);
     
     setCurrentMealPlan({
       ...currentMealPlan,
-      items: updatedItems,
+      items: items,
       ...updatedMacrosAndPrice
     });
   };
 
+  /**
+   * Calculates macronutrients and price based on the items in the meal plan
+   */
   const calculateMacrosAndPrice = (items: MealPlanItem[]) => {
     const initialValues = {
       macros: { calories: 0, protein: 0, carbs: 0, fat: 0 },
@@ -270,51 +211,21 @@ const MealPlansPage: React.FC = () => {
     }, initialValues);
   };
 
-  const handleAddGroup = () => {
+  /**
+   * Adds a new group to the available groups
+   */
+  const handleAddGroup = (newGroup: string) => {
     if (newGroup && !availableGroups.includes(newGroup)) {
       setAvailableGroups([...availableGroups, newGroup]);
-      setCurrentItem({...currentItem, group: newGroup});
-      setNewGroup('');
+      return true;
     }
+    return false;
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setCurrentMealPlan({
-      ...currentMealPlan,
-      [name]: value
-    });
-  };
-
-  const handleItemChange = (e: React.ChangeEvent<{ name?: string; value: unknown }>) => {
-    const { name, value } = e.target;
-    if (name) {
-      // Parse quantity to number to avoid GraphQL type errors
-      if (name === 'quantity') {
-        setCurrentItem({
-          ...currentItem,
-          [name]: parseFloat(value as string) || 0
-        });
-      } else {
-        setCurrentItem({
-          ...currentItem,
-          [name]: value
-        });
-      }
-    }
-  };
-
-  const handleTypeChange = (type: 'ingredient' | 'meal') => {
-    setCurrentItem({
-      ...currentItem,
-      type,
-      itemId: '' // Reset selected item when type changes
-    });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  /**
+   * Submits the meal plan form for creation or update
+   */
+  const handleSubmit = async () => {    
     // Validate form
     if (!currentMealPlan.name) {
       setSnackbar({
@@ -360,6 +271,9 @@ const MealPlansPage: React.FC = () => {
     }
   };
 
+  /**
+   * Deletes the current meal plan
+   */
   const handleDelete = async () => {
     try {
       setPageLoading(true);
@@ -390,7 +304,9 @@ const MealPlansPage: React.FC = () => {
     });
   };
 
-  // Helper function to find item name by id
+  /**
+   * Helper function to find item name by id
+   */
   const getItemName = (type: string, itemId: string) => {
     if (type === 'ingredient') {
       const ingredient = ingredients.find(i => i._id === itemId);
@@ -401,12 +317,44 @@ const MealPlansPage: React.FC = () => {
     }
   };
 
-  const groupedItems = currentMealPlan.items.reduce((groups, item) => {
-    const group = item.group || 'General';
-    if (!groups[group]) groups[group] = [];
-    groups[group].push(item);
-    return groups;
-  }, {} as Record<string, MealPlanItem[]>);
+  // Define table columns with unique ids
+  const columns: Column[] = [
+    { 
+      id: 'name', 
+      label: 'Name',
+      format: (value) => <span style={{ fontWeight: 'medium' }}>{value}</span>
+    },
+    { 
+      id: 'items', 
+      label: 'Items',
+      format: (value) => value.length
+    },
+    { 
+      id: 'macros.calories', 
+      label: 'Calories',
+      format: (value, row) => <span style={{ color: theme.palette.error.main }}>{row.macros.calories.toFixed(0)}</span>
+    },
+    { 
+      id: 'macros.protein', 
+      label: 'Protein (g)',
+      format: (value, row) => <span style={{ color: theme.palette.info.main }}>{row.macros.protein.toFixed(1)}</span>
+    },
+    { 
+      id: 'macros.carbs', 
+      label: 'Carbs (g)',
+      format: (value, row) => <span style={{ color: theme.palette.warning.main }}>{row.macros.carbs.toFixed(1)}</span>
+    },
+    { 
+      id: 'macros.fat', 
+      label: 'Fat (g)',
+      format: (value, row) => <span style={{ color: '#FFA726' }}>{row.macros.fat.toFixed(1)}</span>
+    },
+    { 
+      id: 'price', 
+      label: 'Price',
+      format: (value) => <span style={{ color: theme.palette.success.main, fontWeight: 'medium' }}>${value.toFixed(2)}</span>
+    }
+  ];
 
   if (!isMounted) {
     return (
@@ -419,458 +367,128 @@ const MealPlansPage: React.FC = () => {
   }
 
   return (
-    <Container>
-      <Box sx={{ my: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          My Meal Plans
-        </Typography>
-        
-        <Button 
-          variant="contained" 
-          color="primary" 
-          startIcon={<AddIcon />}
-          onClick={() => handleOpenForm()}
-          sx={{ mb: 3 }}
-        >
-          Create New Meal Plan
-        </Button>
-        
-        {loading && pageLoading && !openForm && !openDeleteDialog ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-            <CircularProgress />
-          </Box>
-        ) : error ? (
-          <Alert severity="error" sx={{ my: 2 }}>{error}</Alert>
-        ) : mealPlans.length === 0 ? (
-          <Alert severity="info" sx={{ my: 2 }}>
-            You don't have any meal plans yet. Create your first one!
-          </Alert>
-        ) : (
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Items</TableCell>
-                  <TableCell>Calories</TableCell>
-                  <TableCell>Protein (g)</TableCell>
-                  <TableCell>Carbs (g)</TableCell>
-                  <TableCell>Fat (g)</TableCell>
-                  <TableCell>Price</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {mealPlans.map((mealPlan) => (
-                  <TableRow key={mealPlan._id}>
-                    <TableCell>{mealPlan.name}</TableCell>
-                    <TableCell>{mealPlan.items.length}</TableCell>
-                    <TableCell>{mealPlan.macros.calories.toFixed(0)}</TableCell>
-                    <TableCell>{mealPlan.macros.protein.toFixed(1)}</TableCell>
-                    <TableCell>{mealPlan.macros.carbs.toFixed(1)}</TableCell>
-                    <TableCell>{mealPlan.macros.fat.toFixed(1)}</TableCell>
-                    <TableCell>${mealPlan.price.toFixed(2)}</TableCell>
-                    <TableCell>
-                      <IconButton 
-                        color="primary" 
-                        onClick={() => handleOpenForm(mealPlan)}
-                        aria-label="edit"
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton 
-                        color="error" 
-                        onClick={() => handleOpenDeleteDialog(mealPlan)}
-                        aria-label="delete"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-
-        {/* Create/Edit Meal Plan Form Dialog */}
-        <ClientDialog open={openForm} onClose={handleCloseForm} maxWidth="md" fullWidth>
-          <DialogTitle>
-            {isEditing ? 'Edit Meal Plan' : 'Create New Meal Plan'}
-          </DialogTitle>
-          <form onSubmit={handleSubmit}>
-            <DialogContent>
-              <Grid container spacing={2}>
-                <Grid size={12}>
-                  <TextField
-                    autoFocus
-                    name="name"
-                    label="Meal Plan Name"
-                    fullWidth
-                    required
-                    value={currentMealPlan.name}
-                    onChange={handleChange}
-                    margin="normal"
-                  />
-                </Grid>
-                
-                <Grid size={12}>
-                  <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-                    Add Items to Meal Plan
-                  </Typography>
-                  
-                  <Tabs value={tabValue} onChange={handleTabChange} aria-label="item type tabs">
-                    <Tab label="Ingredients" id="ingredients-tab" aria-controls="ingredients-panel" />
-                    <Tab label="Meals" id="meals-tab" aria-controls="meals-panel" />
-                  </Tabs>
-                  
-                  <TabPanel value={tabValue} index={0}>
-                    <Grid container spacing={2}>
-                      <Grid size={12}>
-                        <FormControl fullWidth margin="normal">
-                          <InputLabel id="ingredient-select-label">Select Ingredient</InputLabel>
-                          <Select
-                            labelId="ingredient-select-label"
-                            name="itemId"
-                            value={currentItem.itemId}
-                            onChange={handleItemChange as any}
-                            label="Select Ingredient"
-                          >
-                            <MenuItem value="">
-                              <em>Select an ingredient</em>
-                            </MenuItem>
-                            {ingredients.map((ingredient) => (
-                              <MenuItem key={ingredient._id} value={ingredient._id}>
-                                {ingredient.name}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </Grid>
-                      
-                      <Grid size={12}>
-                        <TextField
-                          name="quantity"
-                          label="Quantity"
-                          type="number"
-                          fullWidth
-                          margin="normal"
-                          value={currentItem.quantity}
-                          onChange={handleItemChange as any}
-                          inputProps={{ min: 0.1, step: 0.1 }}
-                        />
-                      </Grid>
-                      
-                      <Grid size={12}>
-                        <FormControl fullWidth margin="normal">
-                          <InputLabel id="group-select-label">Group</InputLabel>
-                          <Select
-                            labelId="group-select-label"
-                            name="group"
-                            value={currentItem.group}
-                            onChange={handleItemChange as any}
-                            label="Group"
-                          >
-                            {availableGroups.map((group) => (
-                              <MenuItem key={group} value={group}>
-                                {group}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </Grid>
-                      
-                      <Grid size={12} container spacing={1}>
-                        <Grid size={9}>
-                          <TextField
-                            label="New Group"
-                            fullWidth
-                            value={newGroup}
-                            onChange={(e) => setNewGroup(e.target.value)}
-                          />
-                        </Grid>
-                        <Grid size={3}>
-                          <Button 
-                            variant="contained" 
-                            onClick={handleAddGroup}
-                            sx={{ height: '100%', width: '100%' }}
-                          >
-                            Add Group
-                          </Button>
-                        </Grid>
-                      </Grid>
-                      
-                      <Grid size={12}>
-                        <Button 
-                          variant="contained" 
-                          color="primary" 
-                          onClick={() => handleAddItem("ingredient")}
-                          fullWidth
-                          startIcon={<AddIcon />}
-                          disabled={!currentItem.itemId || currentItem.quantity <= 0}
-                        >
-                          Add Ingredient
-                        </Button>
-                      </Grid>
-                    </Grid>
-                  </TabPanel>
-                  
-                  <TabPanel value={tabValue} index={1}>
-                    <Grid container spacing={2}>
-                      <Grid size={12}>
-                        <FormControl fullWidth margin="normal">
-                          <InputLabel id="meal-select-label">Select Meal</InputLabel>
-                          <Select
-                            labelId="meal-select-label"
-                            name="itemId"
-                            value={currentItem.itemId}
-                            onChange={handleItemChange as any}
-                            label="Select Meal"
-                          >
-                            <MenuItem value="">
-                              <em>Select a meal</em>
-                            </MenuItem>
-                            {meals.map((meal) => (
-                              <MenuItem key={meal._id} value={meal._id}>
-                                {meal.name}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </Grid>
-                      
-                      <Grid size={12}>
-                        <TextField
-                          name="quantity"
-                          label="Quantity"
-                          type="number"
-                          fullWidth
-                          margin="normal"
-                          value={currentItem.quantity}
-                          onChange={handleItemChange as any}
-                          inputProps={{ min: 0.1, step: 0.1 }}
-                        />
-                      </Grid>
-                      
-                      <Grid size={12}>
-                        <FormControl fullWidth margin="normal">
-                          <InputLabel id="group-select-label">Group</InputLabel>
-                          <Select
-                            labelId="group-select-label"
-                            name="group"
-                            value={currentItem.group}
-                            onChange={handleItemChange as any}
-                            label="Group"
-                          >
-                            {availableGroups.map((group) => (
-                              <MenuItem key={group} value={group}>
-                                {group}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </Grid>
-                      
-                      <Grid size={12} container spacing={1}>
-                        <Grid size={9}>
-                          <TextField
-                            label="New Group"
-                            fullWidth
-                            value={newGroup}
-                            onChange={(e) => setNewGroup(e.target.value)}
-                          />
-                        </Grid>
-                        <Grid size={3}>
-                          <Button 
-                            variant="contained" 
-                            onClick={handleAddGroup}
-                            sx={{ height: '100%', width: '100%' }}
-                          >
-                            Add Group
-                          </Button>
-                        </Grid>
-                      </Grid>
-                      
-                      <Grid size={12}>
-                        <Button 
-                          variant="contained" 
-                          color="primary" 
-                          onClick={() => handleAddItem("meal")}
-                          fullWidth
-                          startIcon={<AddIcon />}
-                          disabled={!currentItem.itemId || currentItem.quantity <= 0}
-                        >
-                          Add Meal
-                        </Button>
-                      </Grid>
-                    </Grid>
-                  </TabPanel>
-                </Grid>
-                
-                <Grid size={12}>
-                  <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-                    Current Items in Meal Plan
-                  </Typography>
-                  
-                  {Object.keys(groupedItems).length === 0 ? (
-                    <Alert severity="info" sx={{ mt: 2 }}>
-                      No items added to this meal plan yet.
-                    </Alert>
-                  ) : (
-                    Object.entries(groupedItems).map(([group, items]) => (
-                      <Box key={group} sx={{ mb: 3 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                          <Typography variant="subtitle1" fontWeight="bold" sx={{ mr: 1 }}>
-                            {group}
-                          </Typography>
-                          <Chip 
-                            label={`${items.length} ${items.length === 1 ? 'item' : 'items'}`} 
-                            size="small" 
-                            color="primary" 
-                          />
-                        </Box>
-                        
-                        <TableContainer component={Paper} sx={{ mb: 2 }}>
-                          <Table size="small">
-                            <TableHead>
-                              <TableRow>
-                                <TableCell>Type</TableCell>
-                                <TableCell>Item</TableCell>
-                                <TableCell>Quantity</TableCell>
-                                <TableCell>Actions</TableCell>
-                              </TableRow>
-                            </TableHead>
-                            <TableBody>
-                              {items.map((item, index) => {
-                                const itemIndex = currentMealPlan.items.findIndex(i => 
-                                  i.type === item.type && i.itemId === item.itemId && i.group === item.group
-                                );
-                                return (
-                                  <TableRow key={`${item.type}-${item.itemId}-${index}`}>
-                                    <TableCell>{item.type === 'ingredient' ? 'Ingredient' : 'Meal'}</TableCell>
-                                    <TableCell>{getItemName(item.type, item.itemId)}</TableCell>
-                                    <TableCell>
-                                      <TextField 
-                                        type="number"
-                                        size="small"
-                                        value={item.quantity}
-                                        onChange={(e) => {
-                                          const updatedItems = [...currentMealPlan.items];
-                                          updatedItems[itemIndex] = {
-                                            ...updatedItems[itemIndex],
-                                            quantity: parseFloat(e.target.value) || 0
-                                          };
-                                          const updatedMacrosAndPrice = calculateMacrosAndPrice(updatedItems);
-                                          setCurrentMealPlan({
-                                            ...currentMealPlan,
-                                            items: updatedItems,
-                                            ...updatedMacrosAndPrice
-                                          });
-                                        }}
-                                        inputProps={{ min: 0.1, step: 0.1 }}
-                                        sx={{ width: '80px' }}
-                                      />
-                                    </TableCell>
-                                    <TableCell>
-                                      <IconButton 
-                                        size="small" 
-                                        color="error" 
-                                        onClick={() => handleRemoveItem(itemIndex)}
-                                      >
-                                        <DeleteIcon fontSize="small" />
-                                      </IconButton>
-                                    </TableCell>
-                                  </TableRow>
-                                );
-                              })}
-                            </TableBody>
-                          </Table>
-                        </TableContainer>
-                      </Box>
-                    ))
-                  )}
-                </Grid>
-                
-                <Grid size={12}>
-                  <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-                    Nutrition Summary
-                  </Typography>
-                  <TableContainer component={Paper}>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Calories</TableCell>
-                          <TableCell>Protein (g)</TableCell>
-                          <TableCell>Carbs (g)</TableCell>
-                          <TableCell>Fat (g)</TableCell>
-                          <TableCell>Price ($)</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        <TableRow>
-                          <TableCell>{currentMealPlan.macros.calories.toFixed(0)}</TableCell>
-                          <TableCell>{currentMealPlan.macros.protein.toFixed(1)}</TableCell>
-                          <TableCell>{currentMealPlan.macros.carbs.toFixed(1)}</TableCell>
-                          <TableCell>{currentMealPlan.macros.fat.toFixed(1)}</TableCell>
-                          <TableCell>${currentMealPlan.price.toFixed(2)}</TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Grid>
-              </Grid>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={handleCloseForm}>Cancel</Button>
-              <Button 
-                type="submit" 
-                variant="contained" 
-                color="primary"
-                disabled={loading && pageLoading}
+    <>
+      {/* Hero Section */}
+      <Box
+        sx={{
+          background: `linear-gradient(to right, ${alpha(theme.palette.primary.dark, 0.9)}, ${alpha(theme.palette.primary.main, 0.8)})`,
+          color: "white",
+          py: { xs: 6, md: 8 },
+          mb: 4,
+          borderRadius: { xs: 0, md: 2 },
+          boxShadow: `0 4px 20px ${alpha(theme.palette.primary.main, 0.4)}`,
+        }}
+      >
+        <Container maxWidth="lg">
+          <Grid container spacing={2} alignItems="center">
+            <Grid size={12}>
+              <Typography
+                variant="h3"
+                component="h1"
+                gutterBottom
+                fontWeight="bold"
+                sx={{
+                  textShadow: `0 2px 10px ${alpha(theme.palette.common.black, 0.3)}`,
+                }}
               >
-                {(loading && pageLoading) ? <CircularProgress size={24} /> : isEditing ? 'Update' : 'Create'}
-              </Button>
-            </DialogActions>
-          </form>
-        </ClientDialog>
-
-        {/* Delete Confirmation Dialog */}
-        <ClientDialog open={openDeleteDialog} onClose={handleCloseDeleteDialog}>
-          <DialogTitle>Confirm Deletion</DialogTitle>
-          <DialogContent>
-            Are you sure you want to delete the meal plan "{currentMealPlan.name}"? 
-            This action cannot be undone.
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseDeleteDialog}>Cancel</Button>
-            <Button 
-              onClick={handleDelete} 
-              color="error" 
-              variant="contained"
-              disabled={loading && pageLoading}
-            >
-              {(loading && pageLoading) ? <CircularProgress size={24} /> : 'Delete'}
-            </Button>
-          </DialogActions>
-        </ClientDialog>
-
-        {/* Snackbar for notifications */}
-        <ClientSnackbar 
-          open={snackbar.open} 
-          autoHideDuration={6000} 
-          onClose={handleCloseSnackbar}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        >
-          <Alert 
-            onClose={handleCloseSnackbar} 
-            severity={snackbar.severity}
-            sx={{ width: '100%' }}
-          >
-            {snackbar.message}
-          </Alert>
-        </ClientSnackbar>
+                Plan Your Meals
+              </Typography>
+              <Typography variant="h6" sx={{ mb: 2, opacity: 0.9 }}>
+                Organize ingredients and meals into comprehensive meal plans
+              </Typography>
+            </Grid>
+            <Grid size={12} sx={{ textAlign: 'center' }}>
+              <RestaurantMenuIcon sx={{ fontSize: 100, opacity: 0.9 }} />
+            </Grid>
+          </Grid>
+        </Container>
       </Box>
-    </Container>
+
+      <Container>
+        <Box sx={{ position: 'relative', minHeight: '80vh' }}>
+          <PageHeader 
+            title="My Meal Plans"
+            icon={<RestaurantMenuIcon />}
+            color="primary"
+            onAddNew={() => handleOpenForm()}
+            addButtonText="Create New Meal Plan"
+          />
+          
+          {loading && pageLoading && !openForm && !openDeleteDialog ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : error ? (
+            <Alert severity="error" sx={{ my: 2 }}>{error}</Alert>
+          ) : mealPlans.length === 0 ? (
+            <Card sx={{ 
+              my: 4, 
+              boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.15)}`,
+              borderRadius: 2,
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+            }}>
+              <CardContent sx={{ textAlign: 'center', py: 6 }}>
+                <RestaurantMenuIcon sx={{ fontSize: 60, color: alpha(theme.palette.primary.main, 0.6), mb: 2 }} />
+                <Typography variant="h5" color="text.secondary" gutterBottom>
+                  No Meal Plans Yet
+                </Typography>
+                <Typography variant="body1" color="text.secondary" paragraph>
+                  You haven't created any meal plans yet. Click "Create New Meal Plan" to get started.
+                </Typography>
+              </CardContent>
+            </Card>
+          ) : (
+            <DataTable 
+              columns={columns}
+              data={mealPlans}
+              color="primary"
+              onEdit={handleOpenForm}
+              onDelete={handleOpenDeleteDialog}
+              getRowId={(row) => row._id}
+            />
+          )}
+
+          {/* Create/Edit Meal Plan Form Dialog */}
+          <DragDropMealPlanForm
+            open={openForm}
+            isEditing={isEditing}
+            loading={loading && pageLoading}
+            currentMealPlan={currentMealPlan}
+            ingredients={ingredients}
+            meals={meals}
+            onClose={handleCloseForm}
+            onSubmit={handleSubmit}
+            onMealPlanChange={handleChange}
+          />
+
+          {/* Delete Confirmation Dialog */}
+          <DeleteConfirmationDialog
+            open={openDeleteDialog}
+            onClose={handleCloseDeleteDialog}
+            onConfirm={handleDelete}
+            title="Confirm Deletion"
+            message={`Are you sure you want to delete the meal plan "${currentMealPlan.name}"? This action cannot be undone.`}
+            loading={loading && pageLoading}
+          />
+
+          {/* Snackbar for notifications */}
+          <ClientSnackbar 
+            open={snackbar.open} 
+            autoHideDuration={6000} 
+            onClose={handleCloseSnackbar}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          >
+            <Alert 
+              onClose={handleCloseSnackbar} 
+              severity={snackbar.severity}
+              sx={{ width: '100%' }}
+            >
+              {snackbar.message}
+            </Alert>
+          </ClientSnackbar>
+        </Box>
+      </Container>
+    </>
   );
 };
 
