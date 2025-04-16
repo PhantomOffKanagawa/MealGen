@@ -120,10 +120,15 @@ export const createIngredient = async (
   ingredient: Omit<Ingredient, "_id">
 ) => {
   try {
-    const data = await graphqlClient.request(CREATE_INGREDIENT_MUTATION, {
-      record: ingredient,
-    });
-    return data.ingredientCreateOne.record;
+    const data = await graphqlClient.mutate(
+      {
+        mutation: CREATE_INGREDIENT_MUTATION,
+        variables: {
+          record: ingredient,
+        },
+      }
+    );
+    return data.data.ingredientCreateOne.record;
   } catch (error) {
     console.error("Error creating ingredient:", error);
     throw error;

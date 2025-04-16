@@ -56,5 +56,12 @@ const IngredientSchema = new mongoose.Schema({
 
 IngredientSchema.index({ userId: 1, name: 1 }, { unique: true });
 
+IngredientSchema.pre('save', function (next) {
+    const pubsub = require('../utils/pubsub');
+    console.log('Ingredient saved:', this);
+    pubsub.publish('INGREDIENT_ADDED', { ingredientAdded: this });
+    next();
+});
+
 const Ingredient = mongoose.model('Ingredient', IngredientSchema);
 module.exports = Ingredient;

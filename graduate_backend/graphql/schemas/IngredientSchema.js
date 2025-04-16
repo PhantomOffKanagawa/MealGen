@@ -2,7 +2,8 @@ const { composeMongoose } = require('graphql-compose-mongoose');
 const { schemaComposer } = require('graphql-compose');
 const customOptions = require('../customOptions');
 const Ingredient = require('../../mongodb/IngredientModel');
-const { pubsub } = require('../../utils/pubsub'); // Import your pubsub instance
+const { PubSub } = require('graphql-subscriptions');
+const pubsub = new PubSub(); // Create a new PubSub instance
 
 // Convert Mongoose model to GraphQL TypeComposer
 const IngredientTC = composeMongoose(Ingredient, {
@@ -43,20 +44,6 @@ const IngredientMutations = {
     ingredientRemoveById: IngredientTC.mongooseResolvers.removeById(),
     ingredientRemoveOne: IngredientTC.mongooseResolvers.removeOne(),
     ingredientRemoveMany: IngredientTC.mongooseResolvers.removeMany(),
-    addIngredient: {
-      type: IngredientTC,
-      args: { input: IngredientTC.getInputType() },
-      resolve: async (_, { input }, { pubsub }) => {
-        const newIngredient = await Ingredient.create(input);
-       
-        // Publish event after adding
-        pubsub.publish('INGREDIENT_ADDED', { 
-          ingredientAdded: newIngredient 
-        });
-        
-        return newIngredient;
-      }
-    },
 };
 
 const IngredientSubscriptions = {
@@ -65,7 +52,7 @@ const IngredientSubscriptions = {
         resolve: payload => {
           return payload.ingredientAdded;
         },
-        subscribe: () => pubsub.asyncIterator('INGREDIENT_ADDED'),
+        subscribe: (parent, args, { pubsub }) => pubsub.asyncIterableIterator('INGREDIENT_ADDED'),
     },
 };
 
