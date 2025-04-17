@@ -106,16 +106,16 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
       id: ing._id,
       name: ing.name,
       type: "ingredient" as const,
-      calories: ing.macros?.calories || 0,
       price: ing.price || 0,
       macros: ing.macros || { calories: 0, protein: 0, carbs: 0, fat: 0 },
+      quantity: ing.quantity || 1,
+      unit: ing.unit || "g",
     }));
 
     const mealItems = meals.map((meal) => ({
       id: meal._id,
       name: meal.name,
       type: "meal" as const,
-      calories: meal.macros?.calories || 0,
       price: meal.price || 0,
       macros: meal.macros || { calories: 0, protein: 0, carbs: 0, fat: 0 },
     }));
@@ -926,8 +926,11 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
                             column={columnId}
                             name={itemData.name}
                             type={itemData.type}
-                            calories={itemData.macros?.calories}
                             quantity={itemQuantities[id] || 1}
+                            macros={itemData.macros}
+                            price={itemData.price}
+                            unitQuantity={itemData.quantity}
+                            unit={itemData.unit}
                             onQuantityChange={handleQuantityChange}
                           />
                         ) : null;
@@ -966,8 +969,11 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
                             column={columnId}
                             name={itemData.name}
                             type={itemData.type}
-                            calories={itemData.macros?.calories}
                             quantity={itemQuantities[id] || 1}
+                            macros={itemData.macros}
+                            price={itemData.price}
+                            unitQuantity={itemData.quantity}
+                            unit={itemData.unit}
                             onQuantityChange={handleQuantityChange}
                           />
                         ) : null;
