@@ -243,6 +243,7 @@ export function Item({
                 >
                   {isIngredient ? "Ingredient" : "Meal"}
                 </Typography>
+                {type == "ingredient" && (
                 <Typography
                   variant="caption"
                   color="text.secondary"
@@ -250,6 +251,7 @@ export function Item({
                 >
                   • {unitQuantity * itemQuantity} {unit}
                 </Typography>
+                )}
               </Box>
             </Box>{" "}
             {/* No nutrition data in top row for store items */}
