@@ -1,5 +1,5 @@
 import graphqlClient, { setAuthToken } from "./graphql";
-import { gql } from "graphql-request";
+import { gql } from "@apollo/client";
 
 // Types
 export interface User {
@@ -78,11 +78,12 @@ export const login = async (
   password: string
 ): Promise<AuthResponse> => {
   try {
-    const data: { login: AuthResponse } = await graphqlClient.request(
-      LOGIN_MUTATION,
-      { email, password }
-    );
-    const authData = data.login;
+    const result = await graphqlClient.mutate<{ login: AuthResponse }>({
+      mutation: LOGIN_MUTATION,
+      variables: { email, password },
+    });
+    const authData = result.data?.login;
+    if (!authData) throw new Error("Login failed");
     setAuthToken(authData.token); // Store the authentication token
     return authData;
   } catch (error) {
@@ -106,11 +107,12 @@ export const register = async (
   age?: number
 ): Promise<AuthResponse> => {
   try {
-    const data: { register: AuthResponse } = await graphqlClient.request(
-      REGISTER_MUTATION,
-      { name, email, password, age }
-    );
-    const authData = data.register;
+    const result = await graphqlClient.mutate<{ register: AuthResponse }>({
+      mutation: REGISTER_MUTATION,
+      variables: { name, email, password, age },
+    });
+    const authData = result.data?.register;
+    if (!authData) throw new Error("Registration failed");
     setAuthToken(authData.token); // Store the authentication token
     return authData;
   } catch (error) {
@@ -124,11 +126,12 @@ export const register = async (
  * @returns A promise that resolves to the current user's data, or null if an error occurs.
  */
 export const getCurrentUser = async (): Promise<User | null> => {
-  if (!isAuthenticated()) return null; // Check if the user is authenticated before fetching data
-
   try {
-    const data: { me: User } = await graphqlClient.request(ME_QUERY);
-    return data.me;
+    if (!isAuthenticated()) return null; // Check if the user is authenticated before fetching data
+    const result = await graphqlClient.query<{ me: User }>({
+      query: ME_QUERY,
+    });
+    return result.data?.me ?? null;
   } catch (error) {
     console.error("Get current user error:", error);
     return null; // Return null if there's an error fetching the user
