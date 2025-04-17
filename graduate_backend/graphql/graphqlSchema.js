@@ -25,15 +25,6 @@ schemaComposer.Subscription.addFields({
     ...IngredientSubscriptions,
 });
 
-// Subscription Publisher
-(async () => {
-    const changeStream = await mongoose.connection.collection('ingredients').watch();
-    changeStream.on('added', (change) => {
-        const ingredient = change.fullDocument;
-        pubsub.publish('INGREDIENT_ADDED', { ingredientAdded: ingredient });
-    });
-})().catch(console.error);
-
 // Add custom queries and mutations for other models similarly
 const graphqlSchema = schemaComposer.buildSchema();
 

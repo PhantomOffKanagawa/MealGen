@@ -80,10 +80,10 @@ const DELETE_INGREDIENT_MUTATION = gql`
   }
 `;
 
-// GraphQL subscription to listen for new ingredients
-export const INGREDIENT_ADDED = gql`
-  subscription IngredientAdded {
-    ingredientAdded {
+// GraphQL subscription to listen for updated ingredients
+export const INGREDIENT_UPDATED = gql`
+  subscription ingredientUpdated {
+    ingredientUpdated {
       userId
       name
       quantity
@@ -102,13 +102,14 @@ export const INGREDIENT_ADDED = gql`
 
 export const getAllIngredients = async (graphqlClient: ApolloClient<NormalizedCacheObject>, user: any) => {
   try {
-    const { data } = await graphqlClient.query({
+    const response = await graphqlClient.query({
       query: GET_ALL_INGREDIENTS_QUERY,
       variables: {
-        filter: { userId: user?._id || '' },
+      filter: { userId: user?._id || '' },
       },
+      fetchPolicy: 'no-cache',
     });
-    return data.ingredientByUserId;
+    return response.data.ingredientByUserId;
   } catch (error) {
     console.error("Error fetching ingredients:", error);
     throw error;
@@ -116,11 +117,11 @@ export const getAllIngredients = async (graphqlClient: ApolloClient<NormalizedCa
 };
 
 export const createIngredient = async (
-  graphqlClient: any,
+  graphqlClient: ApolloClient<NormalizedCacheObject>,
   ingredient: Omit<Ingredient, "_id">
 ) => {
   try {
-    const data = await graphqlClient.mutate(
+    const response = await graphqlClient.mutate(
       {
         mutation: CREATE_INGREDIENT_MUTATION,
         variables: {
@@ -128,7 +129,7 @@ export const createIngredient = async (
         },
       }
     );
-    return data.data.ingredientCreateOne.record;
+    return response.data.ingredientCreateOne.record;
   } catch (error) {
     console.error("Error creating ingredient:", error);
     throw error;
@@ -136,18 +137,38 @@ export const createIngredient = async (
 };
 
 export const updateIngredient = async (
-  graphqlClient: any,
+  graphqlClient: ApolloClient<NormalizedCacheObject>,
   id: string,
   ingredient: Partial<Ingredient>
 ) => {
   try {
-    // Ensure the ingredient object contains the necessary fields for the update
-    const { _id, ...newIngredient } = ingredient;
-    const data = await graphqlClient.request(UPDATE_INGREDIENT_MUTATION, {
-      id,
-      record: newIngredient,
+    // Create a clean input object for the mutation
+    const cleanInput: Record<string, any> = {};
+    
+    // Copy relevant fields, omitting __typename and _id
+    if ('userId' in ingredient && ingredient.userId) cleanInput.userId = ingredient.userId;
+    if ('name' in ingredient && ingredient.name) cleanInput.name = ingredient.name;
+    if ('quantity' in ingredient) cleanInput.quantity = ingredient.quantity;
+    if ('unit' in ingredient && ingredient.unit) cleanInput.unit = ingredient.unit;
+    if ('price' in ingredient) cleanInput.price = ingredient.price;
+    
+    // Handle macros separately to remove __typename
+    if (ingredient.macros) {
+      cleanInput.macros = {
+        calories: ingredient.macros.calories,
+        protein: ingredient.macros.protein,
+        carbs: ingredient.macros.carbs,
+        fat: ingredient.macros.fat
+      };
+    }
+      const response = await graphqlClient.mutate({
+      mutation: UPDATE_INGREDIENT_MUTATION,
+      variables: {
+        id,
+        record: cleanInput,
+      },
     });
-    return data.ingredientUpdateById.recordId;
+    return response.data.ingredientUpdateById.recordId;
   } catch (error) {
     console.error("Error updating ingredient:", error);
     throw error;
@@ -155,14 +176,17 @@ export const updateIngredient = async (
 };
 
 export const deleteIngredient = async (
-  graphqlClient: any,
+  graphqlClient: ApolloClient<NormalizedCacheObject>,
   id: string
 ) => {
   try {
-    const data = await graphqlClient.request(DELETE_INGREDIENT_MUTATION, {
-      id,
+    const response = await graphqlClient.mutate({
+      mutation: DELETE_INGREDIENT_MUTATION,
+      variables: {
+        id,
+      },
     });
-    return data.ingredientRemoveById.recordId;
+    return response.data.ingredientRemoveById.recordId;
   } catch (error) {
     console.error("Error deleting ingredient:", error);
     throw error;

@@ -2,8 +2,7 @@ const { composeMongoose } = require('graphql-compose-mongoose');
 const { schemaComposer } = require('graphql-compose');
 const customOptions = require('../customOptions');
 const Ingredient = require('../../mongodb/IngredientModel');
-const { PubSub } = require('graphql-subscriptions');
-const pubsub = new PubSub(); // Create a new PubSub instance
+const pubsub = require('../../utils/pubsub');
 
 // Convert Mongoose model to GraphQL TypeComposer
 const IngredientTC = composeMongoose(Ingredient, {
@@ -47,12 +46,12 @@ const IngredientMutations = {
 };
 
 const IngredientSubscriptions = {
-    ingredientAdded: {
+    ingredientUpdated: {
         type: IngredientTC,
         resolve: payload => {
-          return payload.ingredientAdded;
+          return payload.ingredientUpdated;
         },
-        subscribe: (parent, args, { pubsub }) => pubsub.asyncIterableIterator('INGREDIENT_ADDED'),
+        subscribe: (parent, args, { pubsub }) => pubsub.asyncIterableIterator('INGREDIENT_UPDATED'),
     },
 };
 

@@ -14,7 +14,7 @@ import {
   updateIngredient, 
   deleteIngredient,
   Ingredient,
-  INGREDIENT_ADDED
+  INGREDIENT_UPDATED
 } from '../../services/ingredientService';
 import { useAuth } from '../../context/AuthContext';
 import PageHeader from '@/components/PageHeader';
@@ -59,7 +59,7 @@ const IngredientsPage: React.FC = () => {
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: '',
-    severity: 'success' as 'success' | 'error'
+    severity: 'success' as 'success' | 'error' | 'info'
   });
   
   // Use this to prevent rendering on server
@@ -76,8 +76,8 @@ const IngredientsPage: React.FC = () => {
   }, [loading, isMounted]);
 
   const fetchIngredients = async () => {
+    setPageLoading(true);
     try {
-      setPageLoading(true);
       const data = await getAllIngredients(graphqlClient, user);
       setIngredients(data || []);
       setError(null);
@@ -142,12 +142,19 @@ const IngredientsPage: React.FC = () => {
   };
 
   // Use the Apollo Client instance explicitly for the subscription
-  const { data: subscriptionData } = useSubscription(INGREDIENT_ADDED, { client: graphqlClient });
+  const { data: subscriptionData } = useSubscription(INGREDIENT_UPDATED, { client: graphqlClient });
 
   useEffect(() => {
-    if (subscriptionData && subscriptionData.ingredientAdded) {
-      console.log('New ingredient added via subscription:', subscriptionData.ingredientAdded);
-      // fetchIngredients(); // or update the state accordingly
+    if (subscriptionData && subscriptionData.ingredientUpdated) {
+      console.log('New update via subscription:', subscriptionData.ingredientUpdated);
+      if(subscriptionData.ingredientUpdated.userId === user?._id) {
+        fetchIngredients(); // or update the state accordingly
+      }
+      setSnackbar({
+        open: true,
+        message: 'External Ingredients Update',
+        severity: 'info'
+      });
     }
   }, [subscriptionData]);
 

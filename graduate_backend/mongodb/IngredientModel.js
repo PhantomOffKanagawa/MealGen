@@ -56,12 +56,17 @@ const IngredientSchema = new mongoose.Schema({
 
 IngredientSchema.index({ userId: 1, name: 1 }, { unique: true });
 
-IngredientSchema.pre('save', function (next) {
+IngredientSchema.post('save', function (doc) {
     const pubsub = require('../utils/pubsub');
-    console.log('Ingredient saved:', this);
-    pubsub.publish('INGREDIENT_ADDED', { ingredientAdded: this });
-    next();
+    pubsub.publish('INGREDIENT_UPDATED', { ingredientUpdated: doc });
 });
 
+// Only document middleware
+// Only this, not doc
+IngredientSchema.pre('deleteOne', { document: true, query: false }, function() {
+    const pubsub = require('../utils/pubsub');
+    pubsub.publish('INGREDIENT_UPDATED', { ingredientUpdated: this });
+});
+  
 const Ingredient = mongoose.model('Ingredient', IngredientSchema);
 module.exports = Ingredient;
