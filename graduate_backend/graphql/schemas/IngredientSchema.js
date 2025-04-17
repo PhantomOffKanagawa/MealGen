@@ -45,13 +45,32 @@ const IngredientMutations = {
     ingredientRemoveMany: IngredientTC.mongooseResolvers.removeMany(),
 };
 
+// Create a type for the subscription payload with sourceClientId
+const IngredientUpdatedPayloadTC = schemaComposer.createObjectTC({
+    name: 'IngredientUpdatedPayload',
+    fields: {
+        ingredientUpdated: 'Ingredient',
+        sourceClientId: 'String',
+    },
+});
+
 const IngredientSubscriptions = {
     ingredientUpdated: {
-        type: IngredientTC,
-        resolve: payload => {
-          return payload.ingredientUpdated;
+        type: IngredientUpdatedPayloadTC,
+        args: {
+            userId: 'MongoID!'
         },
-        subscribe: (parent, args, { pubsub }) => pubsub.asyncIterableIterator('INGREDIENT_UPDATED'),
+        resolve: payload => {
+            return {
+                ingredientUpdated: payload.ingredientUpdated,
+                sourceClientId: payload.sourceClientId,
+            };
+        },
+        subscribe: (_, { userId }) => {
+            // Create a user-specific topic
+            const topic = `INGREDIENT_UPDATED.${userId}`;
+            return pubsub.asyncIterableIterator(topic);
+        },
     },
 };
 

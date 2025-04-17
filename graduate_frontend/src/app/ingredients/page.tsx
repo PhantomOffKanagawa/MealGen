@@ -140,23 +140,28 @@ const IngredientsPage: React.FC = () => {
       });
     }
   };
-
   // Use the Apollo Client instance explicitly for the subscription
-  const { data: subscriptionData } = useSubscription(INGREDIENT_UPDATED, { client: graphqlClient });
+  const subscription = useSubscription(INGREDIENT_UPDATED, {
+    client: graphqlClient,
+    variables: { userId: user?._id || '' },
+    // Skip subscription if auth is loading or user ID is not available
+    skip: loading || !user?._id
+  });
 
   useEffect(() => {
+    console.log('subscription:', subscription);
+    const subscriptionData = subscription.data;
     if (subscriptionData && subscriptionData.ingredientUpdated) {
-      console.log('New update via subscription:', subscriptionData.ingredientUpdated);
-      if(subscriptionData.ingredientUpdated.userId === user?._id) {
-        fetchIngredients(); // or update the state accordingly
-      }
-      setSnackbar({
-        open: true,
-        message: 'External Ingredients Update',
-        severity: 'info'
-      });
+        console.log('New update via subscription:', subscriptionData.ingredientUpdated);
+        fetchIngredients();
+        
+        setSnackbar({
+          open: true,
+          message: 'Ingredient data updated',
+          severity: 'info'
+        });
     }
-  }, [subscriptionData]);
+  }, [subscription]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

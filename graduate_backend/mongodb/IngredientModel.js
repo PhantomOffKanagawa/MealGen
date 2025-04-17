@@ -58,14 +58,18 @@ IngredientSchema.index({ userId: 1, name: 1 }, { unique: true });
 
 IngredientSchema.post('save', function (doc) {
     const pubsub = require('../utils/pubsub');
-    pubsub.publish('INGREDIENT_UPDATED', { ingredientUpdated: doc });
+    // Publish to a user-specific topic
+    const userSpecificTopic = `INGREDIENT_UPDATED.${doc.userId}`;
+    pubsub.publish(userSpecificTopic, { ingredientUpdated: doc });
 });
 
 // Only document middleware
 // Only this, not doc
 IngredientSchema.pre('deleteOne', { document: true, query: false }, function() {
     const pubsub = require('../utils/pubsub');
-    pubsub.publish('INGREDIENT_UPDATED', { ingredientUpdated: this });
+    // Publish to a user-specific topic
+    const userSpecificTopic = `INGREDIENT_UPDATED.${this.userId}`;
+    pubsub.publish(userSpecificTopic, { ingredientUpdated: this });
 });
   
 const Ingredient = mongoose.model('Ingredient', IngredientSchema);

@@ -82,20 +82,23 @@ const DELETE_INGREDIENT_MUTATION = gql`
 
 // GraphQL subscription to listen for updated ingredients
 export const INGREDIENT_UPDATED = gql`
-  subscription ingredientUpdated {
-    ingredientUpdated {
-      userId
-      name
-      quantity
-      unit
-      macros {
-        calories
-        protein
-        carbs
-        fat
+  subscription Subscription($userId: MongoID!) {
+    ingredientUpdated(userId: $userId) {
+      ingredientUpdated {
+        userId
+        name
+        quantity
+        unit
+        macros {
+          calories
+          protein
+          carbs
+          fat
+        }
+        price
+        _id
       }
-      price
-      _id
+      sourceClientId
     }
   }
 `;
