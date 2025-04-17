@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {useSortable} from '@dnd-kit/react/sortable';
 import { 
   Card, 
@@ -47,22 +47,39 @@ export function Item({ id, index, column, type, name, calories, image, quantity 
   const showQuantityControls = !['ingredients-store', 'meals-store'].includes(column);
   
   const isIngredient = type === 'ingredient';
+    // Debounce timer reference
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   // Update local state when prop changes
   useEffect(() => {
     setItemQuantity(quantity);
   }, [quantity]);
   
+  // Debounced quantity change notification
+  const debouncedNotifyChange = useCallback((newQuantity: number) => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    
+    debounceTimerRef.current = setTimeout(() => {
+      if (onQuantityChange) {
+        onQuantityChange(id, newQuantity);
+      }
+      debounceTimerRef.current = null;
+    }, 300); // 300ms debounce
+  }, [id, onQuantityChange]);
+  
   // Handle quantity changes
-  const handleQuantityChange = (newQuantity: number) => {
+  const handleQuantityChange = useCallback((newQuantity: number) => {
     // Prevent negative quantities
     if (newQuantity <= 0) newQuantity = 1;
     
+    // Update local state immediately for responsive UI
     setItemQuantity(newQuantity);
-    if (onQuantityChange) {
-      onQuantityChange(id, newQuantity);
-    }
-  };
+    
+    // Notify parent with debounce
+    debouncedNotifyChange(newQuantity);
+  }, [debouncedNotifyChange]);
   return (    <Card 
       ref={ref}
       sx={{
