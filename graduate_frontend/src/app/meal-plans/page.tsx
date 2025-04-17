@@ -13,7 +13,6 @@ import dynamic from "next/dynamic";
 import {
   Container,
   Box,
-  CircularProgress,
   Snackbar,
   Alert,
   useTheme,
@@ -47,6 +46,7 @@ import { Column } from "@/components/DataTable";
 import DeleteConfirmationDialog from "@/components/DeleteConfirmationDialog";
 import DragDropMealPlanForm from "@/components/dnd/DragDropMealPlanForm";
 import { useSubscription } from "@apollo/client";
+import LoadingStateDisplay from "@/components/LoadingStateDisplay";
 
 // Fix for hydration issues - load these components only on client side
 const ClientSnackbar = dynamic(() => Promise.resolve(Snackbar), { ssr: false });
@@ -549,16 +549,6 @@ const MealPlansPage: React.FC = () => {
     },
   ];
 
-  if (!isMounted) {
-    return (
-      <Container>
-        <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
-          <CircularProgress />
-        </Box>
-      </Container>
-    );
-  }
-
   return (
     <>
       {/* Hero Section */}
@@ -613,10 +603,13 @@ const MealPlansPage: React.FC = () => {
             addButtonText="Create New Meal Plan"
           />
 
-          {loading && pageLoading && !openForm && !openDeleteDialog ? (
-            <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
-              <CircularProgress />
-            </Box>
+          {loading || pageLoading && !openForm && !openDeleteDialog ? (
+            <LoadingStateDisplay 
+              color="primary"
+              text="Loading meal plans..."
+              icon={<RestaurantMenuIcon sx={{ fontSize: 40 }} />}
+              size="large"
+            />
           ) : error ? (
             <Alert severity="error" sx={{ my: 2 }}>
               {error}

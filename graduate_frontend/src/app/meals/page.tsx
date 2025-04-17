@@ -562,7 +562,7 @@ const MealsPage: React.FC = () => {
           {loading || pageLoading && !openForm && !openDeleteDialog ? (
             <LoadingStateDisplay 
               color="secondary"
-              text="Loading ingredients..."
+              text="Loading meals..."
               icon={<FastfoodIcon sx={{ fontSize: 40 }} />}
               size="large"
             />
