@@ -88,7 +88,6 @@ async function startServer() {
   // Import pubsub
   const pubsub = require('./utils/pubsub');
   
-  // WebSocket server setup without authentication for now
   const serverCleanup = useServer(
     {
       schema: graphqlSchema,

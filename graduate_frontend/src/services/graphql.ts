@@ -3,10 +3,14 @@ import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { createClient } from 'graphql-ws';
 import { split, HttpLink } from '@apollo/client/core';
 import { getMainDefinition } from '@apollo/client/utilities';
+import { v4 as uuidv4 } from 'uuid';
 
 // GraphQL endpoint URL, default to http://localhost:4000/graphql if not provided in environment variables
 const endpoint = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || 'http://localhost:4000/graphql';
 const ws_endpoint = process.env.NEXT_PUBLIC_GRAPHQL_WS_ENDPOINT || 'ws://localhost:4000/graphql';
+
+// Generate a unique client ID for this browser session
+export const CLIENT_ID = uuidv4();
 
 // Create an HTTP Link instance for Apollo Client with headers
 const httpLink = new HttpLink({
@@ -20,7 +24,7 @@ const wsLink = new GraphQLWsLink(
       url: ws_endpoint,
       connectionParams: async () => {
         const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-        return { token };
+        return { token, clientId: CLIENT_ID };
       },
       on: {
         connected: () => console.log('WebSocket connected'),
@@ -65,7 +69,7 @@ export const setAuthToken = (token: string | null) => {
             new HttpLink({
                 uri: endpoint,
                 credentials: 'include',
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}`, 'x-client-id': CLIENT_ID }
             })
         ));
         // If running in a browser environment, store the token in localStorage
