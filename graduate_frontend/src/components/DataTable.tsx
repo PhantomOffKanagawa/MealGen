@@ -69,7 +69,8 @@ const DataTable: React.FC<DataTableProps> = ({
         },
         '&:hover': {
           boxShadow: `0 12px 28px ${alpha(theme.palette[color].main, 0.25)}`,
-        }
+        },
+        marginBottom: '20px',
       }}
     >
       <Table>
