@@ -276,7 +276,7 @@ export function Item({
                 }}
               >
                 {/* Calories */}
-                {macros?.calories && (
+                {macros?.calories != undefined && (
                   <Tooltip title="Calories" arrow placement="top">
                     <Box sx={{ display: "flex", alignItems: "center" }}>
                       <LocalFireDepartmentIcon
@@ -297,7 +297,7 @@ export function Item({
                 )}
 
                 {/* Protein */}
-                {macros?.protein && (
+                {macros?.protein != undefined && (
                   <Tooltip title="Protein" arrow placement="top">
                     <Box sx={{ display: "flex", alignItems: "center", ml: 1 }}>
                       <FitnessCenterIcon
@@ -318,7 +318,7 @@ export function Item({
                 )}
 
                 {/* Carbs */}
-                {macros?.carbs && (
+                {macros?.carbs != undefined && (
                   <Tooltip title="Carbs" arrow placement="top">
                     <Box sx={{ display: "flex", alignItems: "center", ml: 1 }}>
                       <GrainIcon
@@ -339,7 +339,7 @@ export function Item({
                 )}
 
                 {/* Fat */}
-                {macros?.fat && (
+                {macros?.fat != undefined && (
                   <Tooltip title="Fat" arrow placement="top">
                     <Box sx={{ display: "flex", alignItems: "center", ml: 1 }}>
                       <OpacityIcon sx={{ fontSize: 16, color: "#FFA726" }} />
@@ -358,7 +358,7 @@ export function Item({
                 )}
 
                 {/* Price */}
-                {price && (
+                {price != undefined && (
                   <Tooltip title="Price" arrow placement="top">
                     <Box sx={{ display: "flex", alignItems: "center", ml: 1 }}>
                       <AttachMoneyIcon
@@ -408,7 +408,7 @@ export function Item({
               }}
             >
               {/* Calories */}
-              {macros?.calories && (
+              {macros?.calories != undefined && (
                 <Tooltip title="Calories" arrow placement="top">
                   <Box sx={{ display: "flex", alignItems: "center" }}>
                     <LocalFireDepartmentIcon
@@ -429,7 +429,7 @@ export function Item({
               )}
 
               {/* Protein */}
-              {macros?.protein && (
+              {macros?.protein != undefined && (
                 <Tooltip title="Protein" arrow placement="top">
                   <Box sx={{ display: "flex", alignItems: "center", ml: 1 }}>
                     <FitnessCenterIcon
@@ -450,7 +450,7 @@ export function Item({
               )}
 
               {/* Carbs */}
-              {macros?.carbs && (
+              {macros?.carbs != undefined && (
                 <Tooltip title="Carbs" arrow placement="top">
                   <Box sx={{ display: "flex", alignItems: "center", ml: 1 }}>
                     <GrainIcon
@@ -471,7 +471,7 @@ export function Item({
               )}
 
               {/* Fat */}
-              {macros?.fat && (
+              {macros?.fat != undefined && (
                 <Tooltip title="Fat" arrow placement="top">
                   <Box sx={{ display: "flex", alignItems: "center", ml: 1 }}>
                     <OpacityIcon sx={{ fontSize: 16, color: "#FFA726" }} />
@@ -490,7 +490,7 @@ export function Item({
               )}
 
               {/* Price */}
-              {price && (
+              {price != undefined && (
                 <Tooltip title="Price" arrow placement="top">
                   <Box sx={{ display: "flex", alignItems: "center", ml: 1 }}>
                     <AttachMoneyIcon
