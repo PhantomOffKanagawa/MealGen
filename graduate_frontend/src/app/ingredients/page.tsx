@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import {
   Container,
@@ -15,6 +15,7 @@ import {
   CardContent,
   Grid,
 } from "@mui/material";
+import LoadingStateDisplay from "@/components/LoadingStateDisplay";
 import KitchenIcon from "@mui/icons-material/Kitchen";
 import graphqlClient, { CLIENT_ID } from "../../services/graphql";
 import {
@@ -55,162 +56,212 @@ const defaultIngredient: Ingredient = {
 };
 
 const IngredientsPage: React.FC = () => {
+  // Importing the useAuth hook to get user data and loading state
   const { user, loading } = useAuth();
+
+  // Importing the theme for styling
   const theme = useTheme();
 
+  // State variables for tracking user data
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+  const [currentIngredient, setCurrentIngredient] = useState<Ingredient>(defaultIngredient);
+
+  // State variables for managing loading, error, and dialog states
   const [pageLoading, setPageLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [openForm, setOpenForm] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [currentIngredient, setCurrentIngredient] =
-    useState<Ingredient>(defaultIngredient);
-  const [isEditing, setIsEditing] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "success" as "success" | "error" | "info",
   });
 
+  // State variables for managing editing data and state
+  const [isEditing, setIsEditing] = useState(false);
+  const [openForm, setOpenForm] = useState(false);
+
   // Use this to prevent rendering on server
   const [isMounted, setIsMounted] = useState(false);
-
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
+  
+  // Fetch ingredients when the component mounts or when loading state changes
   useEffect(() => {
     if (!loading && isMounted) {
       fetchIngredients();
     }
   }, [loading, isMounted]);
 
+  // Set up subscription for real-time ingredient updates
+  useSubscription(INGREDIENT_UPDATED, {
+    // Explicitly provide the client instance
+    client: graphqlClient,
+    // Need users ID to subscribe to updates
+    skip: !user?._id,
+    // Pass the user ID to the subscription
+    variables: { userId: user?._id },
+    // On receiving data from the subscription
+    onData: ({ data }) => {
+      // Get the updated ingredient from the subscription data
+      const { ingredientUpdated } = data?.data || {};
+
+      // Ensure ingredientUpdated is defined and update wasn't from this window
+      if (ingredientUpdated && ingredientUpdated.sourceClientId !== CLIENT_ID) {
+        // Log the received update for debugging
+        console.log("Received ingredient update from server:", ingredientUpdated);
+
+        // Fetch the latest ingredients data after receiving an update
+        fetchIngredients();
+
+        // Show a snackbar notification to the user
+        setSnackbar({
+          open: true,
+          message: "Ingredient data was updated",
+          severity: "info",
+        });
+      }
+    },
+  });
+
+  // Function to fetch all ingredients from the server
   const fetchIngredients = async () => {
-    setPageLoading(true);
     try {
+      // Loading while fetching data
+      setPageLoading(true);
+      // Try to get all ingredients and set them in state
       const data = await getAllIngredients(graphqlClient, user);
       setIngredients(data || []);
       setError(null);
     } catch (err) {
+      // Handle any errors that occur during the fetch
       setError("Failed to load ingredients. Please try again later.");
       console.error(err);
     } finally {
+      // Set loading to false after fetching data
       setPageLoading(false);
     }
   };
 
+  // Function to open the ingredient form dialog
   const handleOpenForm = (ingredient?: Ingredient) => {
+    // If an ingredient is passed, "updating" ingredient
     if (ingredient) {
       setCurrentIngredient(ingredient);
       setIsEditing(true);
     } else {
+      // If no ingredient is passed, "creating" new ingredient
       setCurrentIngredient({
         ...defaultIngredient,
         userId: user?._id || "",
       });
       setIsEditing(false);
     }
+    // Open the form dialog
     setOpenForm(true);
   };
 
+  // Function to close the ingredient form dialog
   const handleCloseForm = () => {
     setOpenForm(false);
   };
 
+  // Function to open the delete confirmation dialog
   const handleOpenDeleteDialog = (ingredient: Ingredient) => {
     setCurrentIngredient(ingredient);
     setOpenDeleteDialog(true);
   };
 
+  // Function to open the delete confirmation dialog
   const handleCloseDeleteDialog = () => {
     setOpenDeleteDialog(false);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Function to handle changes in the form inputs
+  // Wrapped in useCallback to memoize the function and prevent unnecessary re-renders
+  // Uses functional update form of setState to ensure it always has the latest state
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    // Get the name and value of the input that changed
     const { name, value } = e.target;
 
-    if (name.startsWith("macros.")) {
-      const macroProperty = name.split(".")[1];
-      setCurrentIngredient({
-        ...currentIngredient,
-        macros: {
-          ...currentIngredient.macros,
-          [macroProperty]: parseFloat(value) || 0,
-        },
-      });
-    } else if (name === "quantity" || name === "price") {
-      setCurrentIngredient({
-        ...currentIngredient,
-        [name]: parseFloat(value) || 0,
-      });
-    } else {
-      setCurrentIngredient({
-        ...currentIngredient,
-        [name]: value,
-      });
-    }
-  };
-
-  // Use the Apollo Client instance explicitly for the subscription
-  const { data: subscriptionData } = useSubscription(INGREDIENT_UPDATED, {
-    client: graphqlClient,
-    variables: { userId: user?._id || "" },
-    // Skip subscription if auth is loading or user ID is not available
-    skip: loading || !user?._id,
-  });
-
-  useEffect(() => {
-    if (subscriptionData && subscriptionData.ingredientUpdated) {
-      const updatedIngredient =
-        subscriptionData.ingredientUpdated.ingredientUpdated;
-      console.log("New update via subscription", subscriptionData, CLIENT_ID);
-
-      // Check if this update was caused by our own mutation
-      if (CLIENT_ID == subscriptionData.ingredientUpdated.sourceClientId) {
-        console.log("Ignoring update from own mutation");
-        return; // Skip the update if it was from our own mutation
+    // Update the currentIngredient state using the functional update form
+    setCurrentIngredient(prevIngredient => {
+      // If the input name starts with "macros.", update the nested macros object
+      if (name.startsWith("macros.")) {
+        // Extract the macro property name (e.g., "calories", "protein")
+        const macroProperty = name.split(".")[1];
+        // Return the new state object with updated macros
+        return {
+          ...prevIngredient,
+          macros: {
+            ...prevIngredient.macros,
+            // Update the specific macro property, parsing the value to a float or defaulting to 0
+            [macroProperty]: parseFloat(value) || 0,
+          },
+        };
+      // If the input name is "quantity" or "price", update the corresponding property
+      } else if (name === "quantity" || name === "price") {
+        // Return the new state object with the updated numeric property
+        return {
+          ...prevIngredient,
+          // Parse the value to a float or default to 0
+          [name]: parseFloat(value) || 0,
+        };
+      // Otherwise, update a top-level property (e.g., "name", "unit")
+      } else {
+        // Return the new state object with the updated string property
+        return {
+          ...prevIngredient,
+          [name]: value,
+        };
       }
+    });
+  }, []); // Empty dependency array ensures the function is created only once
 
-      // If the update was not from our own mutation, refresh the data
-      fetchIngredients();
-
-      setSnackbar({
-        open: true,
-        message: "Ingredient data updated",
-        severity: "info",
-      });
-    }
-  }, [subscriptionData]);
-
+  // Function to handle form submission for creating or updating an ingredient
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    
     try {
+      // Loading while submitting the form
       setPageLoading(true);
+      // If the form is being submitted for editing an existing ingredient
       if (isEditing) {
+        // Update the ingredient using the updateIngredient function
         await updateIngredient(
           graphqlClient,
           currentIngredient._id,
           user?._id || "",
           currentIngredient
         );
+        // Show a success snackbar notification
         setSnackbar({
           open: true,
           message: "Ingredient updated successfully!",
           severity: "success",
         });
       } else {
+        // If the form is being submitted for creating a new ingredient
         const { _id, ...newIngredient } = currentIngredient;
+        // Set the ingredient's userId to the current user's ID
         newIngredient.userId = user?._id || "";
+        // Create the new ingredient using the createIngredient function
         await createIngredient(graphqlClient, newIngredient);
+        // Show a success snackbar notification
         setSnackbar({
           open: true,
           message: "Ingredient created successfully!",
           severity: "success",
         });
       }
+      // When completed, reset the form state
+      // Close the form dialog
       handleCloseForm();
+      // Fetch the updated list of ingredients
       fetchIngredients();
     } catch (err) {
+      // Handle any errors that occur during the submission
       setSnackbar({
         open: true,
         message: isEditing
@@ -220,26 +271,33 @@ const IngredientsPage: React.FC = () => {
       });
       console.error(err);
     } finally {
+      // Set loading to false after submitting the form
       setPageLoading(false);
     }
   };
 
+  // Function to handle ingredient deletion
   const handleDelete = async () => {
     try {
+      // Loading while deleting the ingredient
       setPageLoading(true);
+      // Delete the ingredient using the deleteIngredient function
       await deleteIngredient(
         graphqlClient,
         currentIngredient._id,
         user?._id || ""
       );
+      // Show a success snackbar notification
       setSnackbar({
         open: true,
         message: "Ingredient deleted successfully!",
         severity: "success",
       });
+      // Close the delete confirmation dialog
       handleCloseDeleteDialog();
       fetchIngredients();
     } catch (err) {
+      // Handle any errors that occur during the deletion
       setSnackbar({
         open: true,
         message: "Failed to delete ingredient. Please try again.",
@@ -251,6 +309,7 @@ const IngredientsPage: React.FC = () => {
     }
   };
 
+  // Function to close the snackbar notification
   const handleCloseSnackbar = () => {
     setSnackbar({
       ...snackbar,
@@ -314,16 +373,6 @@ const IngredientsPage: React.FC = () => {
     },
   ];
 
-  if (!isMounted) {
-    return (
-      <Container>
-        <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
-          <CircularProgress />
-        </Box>
-      </Container>
-    );
-  }
-
   return (
     <>
       {/* Hero Section */}
@@ -377,12 +426,13 @@ const IngredientsPage: React.FC = () => {
             color="success"
             onAddNew={() => handleOpenForm()}
             addButtonText="Add New Ingredient"
-          />
-
-          {loading && pageLoading && !openForm && !openDeleteDialog ? (
-            <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
-              <CircularProgress />
-            </Box>
+          />          {loading || pageLoading && !openForm && !openDeleteDialog ? (
+            <LoadingStateDisplay 
+              color="success"
+              text="Loading ingredients..."
+              icon={<KitchenIcon sx={{ fontSize: 40 }} />}
+              size="large"
+            />
           ) : error ? (
             <Alert severity="error" sx={{ my: 2 }}>
               {error}

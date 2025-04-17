@@ -4,7 +4,7 @@ const { pubsub } = require('../utils/pubsub');
 
 const { UserTC, UserQueries, UserMutations } = require('./schemas/UserSchema');
 const { IngredientTC, IngredientQueries, IngredientMutations, IngredientSubscriptions } = require('./schemas/IngredientSchema');
-const { MealTC, MealQueries, MealMutations } = require('./schemas/MealSchema');
+const { MealTC, MealQueries, MealMutations, MealSubscriptions } = require('./schemas/MealSchema');
 const { MealPlanTC, MealPlanQueries, MealPlanMutations } = require('./schemas/MealPlanSchema');
 
 schemaComposer.Query.addFields({
@@ -23,6 +23,7 @@ schemaComposer.Mutation.addFields({
 
 schemaComposer.Subscription.addFields({
     ...IngredientSubscriptions,
+    ...MealSubscriptions,
 });
 
 // Add custom queries and mutations for other models similarly

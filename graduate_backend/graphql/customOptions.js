@@ -36,11 +36,12 @@ const wrapMutationAndPublish = (resolver, eventName) => {
     // After successful mutation, publish the event
     // Ensure payload and record exist, and userId is present for topic targeting
     if (payload && accessedUserId) {
-      const topic = `${eventName}.${accessedUserId}`;
-      // Publish the event with the record and the sourceClientId
+      const topic = `${eventName}.${accessedUserId}`;      // Publish the event with the record and the sourceClientId
       pubsub.publish(topic, {
-        // The subscription payload expects 'ingredientUpdated'
-        ingredientUpdated: payload.record,
+        // The subscription payload depends on the event type
+        ...(eventName === 'INGREDIENT_UPDATED' 
+          ? { ingredientUpdated: payload.record } 
+          : { mealUpdated: payload.record }),
         sourceClientId: sourceClientId, // Pass the originating client's ID
       });
     } else if (payload && payload.record && !accessedUserId) {
