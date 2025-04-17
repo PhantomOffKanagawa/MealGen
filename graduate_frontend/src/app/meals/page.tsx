@@ -37,6 +37,7 @@ import PageHeader from "@/components/PageHeader";
 import DataTable from "@/components/DataTable";
 import { Column } from "@/components/DataTable";
 import DeleteConfirmationDialog from "@/components/DeleteConfirmationDialog";
+import LoadingStateDisplay from "@/components/LoadingStateDisplay";
 
 // Fix for hydration issues - load these components only on client side
 const ClientSnackbar = dynamic(() => Promise.resolve(Snackbar), { ssr: false });
@@ -503,16 +504,6 @@ const MealsPage: React.FC = () => {
     },
   ];
 
-  if (!isMounted) {
-    return (
-      <Container>
-        <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
-          <CircularProgress />
-        </Box>
-      </Container>
-    );
-  }
-
   return (
     <>
       {/* Hero Section */}
@@ -568,10 +559,13 @@ const MealsPage: React.FC = () => {
             addButtonText="Create New Meal"
           />
 
-          {loading && pageLoading && !openForm && !openDeleteDialog ? (
-            <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
-              <CircularProgress />
-            </Box>
+          {loading || pageLoading && !openForm && !openDeleteDialog ? (
+            <LoadingStateDisplay 
+              color="secondary"
+              text="Loading ingredients..."
+              icon={<FastfoodIcon sx={{ fontSize: 40 }} />}
+              size="large"
+            />
           ) : error ? (
             <Alert severity="error" sx={{ my: 2 }}>
               {error}
