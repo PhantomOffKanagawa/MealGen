@@ -11,7 +11,6 @@ const IngredientTC = composeMongoose(Ingredient, {
 });
 
 // Define custom queries
-console.log('Ingredient Resolvers', IngredientTC.getResolvers());
 const IngredientQueries = {
     ingredientById: IngredientTC.mongooseResolvers.findById(),
     ingredientByIds: IngredientTC.mongooseResolvers.findByIds(),

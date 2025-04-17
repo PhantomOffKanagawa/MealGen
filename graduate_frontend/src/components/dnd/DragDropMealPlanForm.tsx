@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { DragDropProvider } from '@dnd-kit/react';
 import { move } from '@dnd-kit/helpers';
-import { UniqueIdentifier } from '@dnd-kit/core';
+import { debounce } from 'lodash';
 import { 
   Box, 
   Dialog, 
@@ -20,6 +20,9 @@ import {
   IconButton,
   useTheme,
   alpha,
+  Switch,
+  FormControlLabel,
+  Tooltip,
 } from '@mui/material';
 import NutritionTracker from '@/components/meal-plans/NutritionTracker';
 import CloseIcon from '@mui/icons-material/Close';
@@ -72,8 +75,9 @@ interface DragDropMealPlanFormProps {
   currentMealPlan: MealPlan;
   ingredients: Ingredient[];
   meals: Meal[];
+  updatePending: boolean;
   onClose: () => void;
-  onSubmit: () => void;
+  onSubmit: (close: boolean) => void;
   onMealPlanChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
@@ -84,10 +88,16 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
   currentMealPlan,
   ingredients,
   meals,
+  updatePending,
   onClose,
   onSubmit,
   onMealPlanChange,
-}) => {
+}) => {  // State for live edit mode toggle
+  const [liveEditMode, setLiveEditMode] = useState(false);
+  // State to track changes for live edit mode
+  const [savingLiveEdit, setSavingLiveEdit] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  
   // Memoize the mapped items to prevent recreating them on every render
   const { ingredientItems, mealItems, itemsData } = useMemo(() => {
     // Convert ingredients and meals to the format expected by the DnD components
@@ -155,7 +165,7 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
   // Name for the meal plan
   const [mealPlanName, setMealPlanName] = useState('');
   
-  // Flag to track dialog opening to prevent multiple initializations
+// Flag to track dialog opening to prevent multiple initializations
   const [previouslyOpen, setPreviouslyOpen] = useState(false);
   
   // Track item quantities for meal plan items
@@ -175,12 +185,15 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
     // Only run this effect when the dialog opens (from closed to open)
     // or when key dependencies change while dialog is open
     if (open && currentMealPlan) {
-      if (!previouslyOpen || !initialized) {
+      if (updatePending || !previouslyOpen || !initialized) {
+        updatePending = false; // Reset update pending state
+
         // Set the meal plan name
         setMealPlanName(currentMealPlan.name);
         
         // Get unique groups from current meal plan
         const uniqueGroups = new Set<string>();
+        const newItemQuantities: ItemQuantities = {};
 
         if (Object.keys(currentMealPlan.items).length === 0) {
           // Initialize items and columns if not already done
@@ -191,7 +204,12 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
         } else {
           currentMealPlan.items.forEach(item => {
             uniqueGroups.add(item.group || 'General');
+          
+            if (item?.itemId && item?.quantity) {
+              newItemQuantities[item?.itemId] = item?.quantity || 1;
+            }
           });
+          
         }
 
         // Create new columns and items structures (don't modify existing state)
@@ -235,6 +253,7 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
         setColumns(newColumns);
         setItems(newItems);
         setMealPlanOrder(groupOrder);
+        setItemQuantities(newItemQuantities)
         setInitialized(true);
       }
     } else if (!open) {
@@ -246,13 +265,157 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
     setPreviouslyOpen(open);
     
   }, [open, currentMealPlan, defaultColumns, defaultItems, initialized]);
-  
-  // Recalculate nutrition whenever items or quantities change
+    // Recalculate nutrition whenever items or quantities change
   useEffect(() => {
     if (initialized) {
       calculateTotalNutrition();
     }
-  }, [items, itemQuantities, mealPlanOrder]);
+  }, [items, itemQuantities, mealPlanOrder, ingredients, meals, initialized]);
+  
+  // Helper to check if meal plan state has changed
+  const hasMealPlanChanged = useCallback(() => {
+    // Compare meal plan name
+    if (currentMealPlan.name !== mealPlanName) return true;
+
+    // Compare items
+    const updatedItems: MealPlanItem[] = [];
+    mealPlanOrder.forEach(groupId => {
+      const groupName = columns[groupId].title;
+      items[groupId].forEach(itemId => {
+        const item = itemsData[itemId];
+        if (item) {
+          updatedItems.push({
+            type: item.type,
+            itemId: itemId,
+            quantity: itemQuantities[itemId] || 1,
+            group: groupName
+          });
+        }
+      });
+    });
+
+    // Compare lengths
+    if (updatedItems.length !== currentMealPlan.items.length) return true;
+
+    // Compare each item
+    for (let i = 0; i < updatedItems.length; i++) {
+      const a = updatedItems[i];
+      const b = currentMealPlan.items[i];
+      if (
+        a.type !== b.type ||
+        a.itemId !== b.itemId ||
+        a.quantity !== b.quantity ||
+        a.group !== b.group
+      ) {
+        return true;
+      }
+    }
+
+    // Compare macros and price
+    if (
+      currentMealPlan.macros?.calories !== totalNutrition.calories ||
+      currentMealPlan.macros?.protein !== totalNutrition.protein ||
+      currentMealPlan.macros?.carbs !== totalNutrition.carbs ||
+      currentMealPlan.macros?.fat !== totalNutrition.fat ||
+      currentMealPlan.price !== totalNutrition.price
+    ) {
+      return true;
+    }
+
+    return false;
+  }, [
+    currentMealPlan,
+    mealPlanName,
+    mealPlanOrder,
+    columns,
+    items,
+    itemsData,
+    itemQuantities,
+    totalNutrition
+  ]);
+
+  // Create debounced function for live editing
+  const debouncedSave = useCallback(
+    debounce(() => {
+      if (liveEditMode && initialized && !savingLiveEdit && hasMealPlanChanged()) {
+        setSavingLiveEdit(true);
+
+        // Generate the meal plan data in the same format as regular save
+        const updatedItems: MealPlanItem[] = [];
+        mealPlanOrder.forEach(groupId => {
+          const groupName = columns[groupId].title;
+          items[groupId].forEach(itemId => {
+            const item = itemsData[itemId];
+            if (item) {
+              updatedItems.push({
+                type: item.type,
+                itemId: itemId,
+                quantity: itemQuantities[itemId] || 1,
+                group: groupName
+              });
+            }
+          });
+        });
+
+        // Update meal plan object
+        currentMealPlan.name = mealPlanName;
+        currentMealPlan.items = updatedItems;
+        currentMealPlan.macros = {
+          calories: totalNutrition.calories,
+          protein: totalNutrition.protein,
+          carbs: totalNutrition.carbs,
+          fat: totalNutrition.fat
+        };
+        currentMealPlan.price = totalNutrition.price;
+
+        // Call onSubmit to save to database
+        onSubmit(false);
+
+        // Update last saved timestamp
+        setLastSaved(new Date());
+
+        // Reset saving state
+        setTimeout(() => setSavingLiveEdit(false), 500);
+      }
+    }, 1500), // 1.5 second delay before saving
+    [
+      liveEditMode,
+      items,
+      itemQuantities,
+      mealPlanOrder,
+      columns,
+      itemsData,
+      mealPlanName,
+      totalNutrition,
+      currentMealPlan,
+      onSubmit,
+      initialized,
+      savingLiveEdit,
+      hasMealPlanChanged
+    ]
+  );
+  
+  // Effect to trigger auto-save when changes are made and live edit is on
+  useEffect(() => {
+    if (liveEditMode && initialized) {
+      debouncedSave();
+    }
+    
+    // Clean up the debounce on unmount
+    return () => {
+      debouncedSave.cancel();
+    };
+  }, [
+    liveEditMode, 
+    items, 
+    itemQuantities, 
+    mealPlanOrder, 
+    columns, 
+    mealPlanName, 
+    totalNutrition, 
+    debouncedSave, 
+    initialized
+  ]);
 
   // Handle quantity changes for items
   const handleQuantityChange = (itemId: string, quantity: number) => {
@@ -435,7 +598,7 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
     currentMealPlan.price = totalNutrition.price;
     
     // Call the parent onSubmit to save the meal plan
-    onSubmit();
+    onSubmit(true);
   };
 
   return (    
@@ -487,8 +650,7 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
             component="div"
           >
             {isEditing ? 'Edit Meal Plan' : 'Create New Meal Plan'}
-          </Typography>
-          <Button 
+          </Typography>          <Button 
             color="inherit" 
             startIcon={<AddIcon />}
             onClick={addNewGroup}
@@ -509,6 +671,61 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
           >
             Add Group
           </Button>
+          
+          <Tooltip title={liveEditMode ? "Changes are automatically saved" : "Toggle to enable automatic saving"}>
+            <FormControlLabel
+              control={
+                <Switch 
+                  checked={liveEditMode}
+                  onChange={(e) => setLiveEditMode(e.target.checked)}
+                  sx={{
+                    '& .MuiSwitch-switchBase.Mui-checked': {
+                      color: 'white',
+                      '&:hover': {
+                        backgroundColor: alpha('#fff', 0.1),
+                      },
+                    },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                      backgroundColor: alpha('#fff', 0.5),
+                    },
+                    '& .MuiSwitch-track': {
+                      backgroundColor: alpha('#fff', 0.3),
+                    },
+                    '& .MuiSwitch-thumb': {
+                      boxShadow: '0 0 8px rgba(255, 255, 255, 0.3)',
+                    },
+                    mr: 0.5
+                  }}
+                />
+              }
+              label={
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    color: 'white',
+                    fontSize: '0.75rem',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  Live Edit
+                </Typography>
+              }
+              sx={{ 
+                mr: 1,
+                borderRadius: 2,
+                px: 1,
+                bgcolor: liveEditMode 
+                  ? theme => alpha(theme.palette.success.main, 0.4) 
+                  : theme => alpha(theme.palette.common.white, 0.1),
+                backdropFilter: 'blur(8px)',
+                border: liveEditMode 
+                  ? '1px solid rgba(76, 175, 80, 0.5)' 
+                  : '1px solid rgba(255, 255, 255, 0.1)',
+                transition: 'all 0.2s ease'
+              }}
+            />
+          </Tooltip>
+          
           <Button 
             color="inherit" 
             startIcon={<SaveIcon />}
@@ -532,7 +749,7 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
               transition: 'all 0.2s ease'
             }}
           >
-            Save
+            {liveEditMode ? 'Save & Close' : 'Save'}
           </Button>
         </Toolbar>
       </AppBar>
@@ -705,19 +922,6 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
           </DragDropProvider>
         )}
       </DialogContent>
-
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button 
-          onClick={saveMealPlan} 
-          variant="contained" 
-          color="primary"
-          disabled={loading}
-          startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
-        >
-          Save Meal Plan
-        </Button>
-      </DialogActions>
     </Dialog>
     </>
   );

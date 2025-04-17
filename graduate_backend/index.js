@@ -8,10 +8,10 @@ const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const graphqlSchema = require("./graphql/graphqlSchema");
+const { ApolloLink } = require("@apollo/client/core");
 
 // Load environment variables
 const { mongodb_url, jwt_secret, node_env } = require("./utils/env");
-``;
 
 // Websocket imports
 const { WebSocketServer } = require("ws");
@@ -80,14 +80,30 @@ async function startServer() {
     },
   });
 
+  // Apollo Plugin to remove __typename from variables
+  server.addPlugin({
+    async requestDidStart(requestContext) {
+      if (requestContext.request.variables) {
+        const omitTypename = (key, value) =>
+          key === "__typename" ? undefined : value;
+        requestContext.request.variables = JSON.parse(
+          JSON.stringify(requestContext.request.variables),
+          omitTypename
+        );
+      }
+      
+      return {};
+    },
+  });
+
   // Add websocket server
   const wsServer = new WebSocketServer({
     server: httpServer,
     path: "/graphql", // Can share path
   });
   // Import pubsub
-  const pubsub = require('./utils/pubsub');
-  
+  const pubsub = require("./utils/pubsub");
+
   const serverCleanup = useServer(
     {
       schema: graphqlSchema,
@@ -108,7 +124,11 @@ async function startServer() {
     wsServer
   );
 
-  console.log("WebSocket server is ready at ws://localhost:" + (process.env.PORT || 4000) + "/graphql");
+  console.log(
+    "WebSocket server is ready at ws://localhost:" +
+      (process.env.PORT || 4000) +
+      "/graphql"
+  );
 
   // Start the Apollo Server
   await server.start();
