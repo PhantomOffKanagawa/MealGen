@@ -1,4 +1,5 @@
-import { gql } from "graphql-request";
+import { ApolloClient, NormalizedCacheObject } from "@apollo/client";
+import { useMutation, gql, useQuery, useSubscription } from "@apollo/client";
 
 // Types
 export interface MacroNutrients {
@@ -26,7 +27,7 @@ export interface MealPlan {
 
 // GraphQL Queries and Mutations
 // GraphQL query to fetch all meal plans
-const GET_ALL_MEAL_PLANS = gql`
+const GET_ALL_MEAL_PLANS_QUERY = gql`
   query GetMealPlans($filter: FilterFindManyMealPlanInput) {
     mealPlanMany(filter: $filter) {
       _id
@@ -49,31 +50,8 @@ const GET_ALL_MEAL_PLANS = gql`
   }
 `;
 
-const GET_MEAL_PLAN_BY_ID = gql`
-  query GetMealPlanById($id: MongoID!) {
-    mealPlanById(_id: $id) {
-      _id
-      userId
-      name
-      items {
-        type
-        itemId
-        quantity
-        group
-      }
-      macros {
-        calories
-        protein
-        carbs
-        fat
-      }
-      price
-    }
-  }
-`;
-
 // GraphQL mutation to create a new meal plan
-const CREATE_MEAL_PLAN = gql`
+const CREATE_MEAL_PLAN_MUTATION = gql`
   mutation MealPlanCreateOne($record: CreateOneMealPlanInput!) {
     mealPlanCreateOne(record: $record) {
       record {
@@ -99,14 +77,31 @@ const CREATE_MEAL_PLAN = gql`
 `;
 
 // GraphQL mutation to update an existing meal plan
-const UPDATE_MEAL_PLAN = gql`
-  mutation MealPlanUpdateById(
-    $id: MongoID!,
-    $record: UpdateByIdMealPlanInput!
+const UPDATE_MEAL_PLAN_MUTATION = gql`
+  mutation MealPlanUpdateOne(
+    $filter: FilterUpdateOneMealPlanInput,
+    $record: UpdateOneMealPlanInput!
   ) {
-    mealPlanUpdateById(_id: $id, record: $record) {
-      record {
-        _id
+    mealPlanUpdateOne(filter: $filter, record: $record) {
+      recordId
+    }
+  }
+`;
+
+// GraphQL mutation to delete a meal plan
+const DELETE_MEAL_PLAN_MUTATION = gql`
+  mutation MealPlanRemoveOne($filter: FilterRemoveOneMealPlanInput) {
+    mealPlanRemoveOne(filter: $filter) {
+      recordId
+    }
+  }
+`;
+
+// GraphQL subscription to listen for updated meal plans
+export const MEAL_PLAN_UPDATED = gql`
+  subscription Subscription($userId: MongoID!) {
+    mealPlanUpdated(userId: $userId) {
+      mealPlanUpdated {
         userId
         name
         items {
@@ -122,19 +117,9 @@ const UPDATE_MEAL_PLAN = gql`
           fat
         }
         price
-      }
-    }
-  }
-`;
-
-// GraphQL mutation to delete a meal plan
-const DELETE_MEAL_PLAN = gql`
-  mutation MealPlanRemoveById($id: MongoID!) {
-    mealPlanRemoveById(_id: $id) {
-      record {
         _id
-        name
       }
+      sourceClientId
     }
   }
 `;
@@ -142,22 +127,16 @@ const DELETE_MEAL_PLAN = gql`
 // Service functions
 export const getAllMealPlans = async (graphqlClient: any, user: any) => {
   try {
-    const data = await graphqlClient.request(GET_ALL_MEAL_PLANS, {
-      filter: { userId: user?._id || '' },
+    const response = await graphqlClient.query({
+      query: GET_ALL_MEAL_PLANS_QUERY,
+      variables: {
+        filter: { userId: user?._id || '' },
+      },
+      fetchPolicy: 'no-cache',
     });
-    return data.mealPlanMany;
+    return response.data.mealPlanMany;
   } catch (error) {
     console.error("Error fetching meal plans:", error);
-    throw error;
-  }
-};
-
-export const getMealPlanById = async (graphqlClient: any, id: string) => {
-  try {
-    const data = await graphqlClient.request(GET_MEAL_PLAN_BY_ID, { id });
-    return data.mealPlanById;
-  } catch (error) {
-    console.error("Error fetching meal plan:", error);
     throw error;
   }
 };
@@ -167,10 +146,13 @@ export const createMealPlan = async (
   mealPlan: Omit<MealPlan, "_id">
 ) => {
   try {
-    const data = await graphqlClient.request(CREATE_MEAL_PLAN, {
-      record: mealPlan,
+    const response = await graphqlClient.mutate({
+      mutation: CREATE_MEAL_PLAN_MUTATION,
+      variables: {
+        record: mealPlan,
+      },
     });
-    return data.mealPlanCreateOne.record;
+    return response.data.mealPlanCreateOne.record;
   } catch (error) {
     console.error("Error creating meal plan:", error);
     throw error;
@@ -180,16 +162,20 @@ export const createMealPlan = async (
 export const updateMealPlan = async (
   graphqlClient: any,
   id: string,
+  userId: string,
   mealPlan: Partial<MealPlan>
 ) => {
   try {
     // Ensure the mealPlan object contains the necessary fields for the update
     const { _id, ...newMealPlan } = mealPlan;
-    const data = await graphqlClient.request(UPDATE_MEAL_PLAN, {
-      id,
-      record: newMealPlan,
+    const response = await graphqlClient.mutate({
+      mutation: UPDATE_MEAL_PLAN_MUTATION,
+      variables: {
+        filter: { _id: id, userId },
+        record: newMealPlan,
+      }
     });
-    return data.mealPlanUpdateById.record;
+    return response.data.mealPlanUpdateOne.recordId;
   } catch (error) {
     console.error("Error updating meal plan:", error);
     throw error;
@@ -198,13 +184,20 @@ export const updateMealPlan = async (
 
 export const deleteMealPlan = async (
   graphqlClient: any,
-  id: string
+  id: string,
+  userId: string
 ) => {
   try {
-    const data = await graphqlClient.request(DELETE_MEAL_PLAN, {
-      id,
+    const response = await graphqlClient.mutate({
+      mutation: DELETE_MEAL_PLAN_MUTATION,
+      variables: {
+        filter: {
+          _id: id,
+          userId
+        }
+      }
     });
-    return data.mealPlanRemoveById.record;
+    return response.data.mealPlanRemoveOne.recordId;
   } catch (error) {
     console.error("Error deleting meal plan:", error);
     throw error;

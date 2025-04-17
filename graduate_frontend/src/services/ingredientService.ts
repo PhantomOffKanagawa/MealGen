@@ -1,4 +1,5 @@
-import { gql } from "graphql-request";
+import { ApolloClient, NormalizedCacheObject } from "@apollo/client";
+import { useMutation, gql, useQuery, useSubscription } from "@apollo/client";
 
 // Types
 export interface Ingredient {
@@ -60,81 +61,168 @@ const CREATE_INGREDIENT_MUTATION = gql`
 
 // GraphQL mutation to update an existing ingredient
 const UPDATE_INGREDIENT_MUTATION = gql`
-  mutation IngredientUpdateById(
-    $id: MongoID!
-    $record: UpdateByIdIngredientInput!
-  ) {
-    ingredientUpdateById(_id: $id, record: $record) {
-      recordId
-    }
+mutation IngredientUpdateOne($filter: FilterUpdateOneIngredientInput, $record: UpdateOneIngredientInput!) {
+  ingredientUpdateOne(filter: $filter, record: $record) {
+    recordId
   }
+}
 `;
 
 // GraphQL mutation to delete an ingredient
 const DELETE_INGREDIENT_MUTATION = gql`
-  mutation IngredientRemoveById($id: MongoID!) {
-    ingredientRemoveById(_id: $id) {
+  mutation IngredientRemoveOne($filter: FilterRemoveOneIngredientInput) {
+    ingredientRemoveOne(filter: $filter) {
       recordId
     }
   }
 `;
 
-export const getAllIngredients = async (graphqlClient: any, user: any) => {
+// GraphQL subscription to listen for updated ingredients
+export const INGREDIENT_UPDATED = gql`
+  subscription Subscription($userId: MongoID!) {
+    ingredientUpdated(userId: $userId) {
+      ingredientUpdated {
+        userId
+        name
+        quantity
+        unit
+        macros {
+          calories
+          protein
+          carbs
+          fat
+        }
+        price
+        _id
+      }
+      sourceClientId
+    }
+  }
+`;
+
+// Function to fetch all ingredients for a user
+// This function takes a GraphQL client and a user object as parameters
+export const getAllIngredients = async (graphqlClient: ApolloClient<NormalizedCacheObject>, user: any) => {
   try {
-    const data = await graphqlClient.request(GET_ALL_INGREDIENTS_QUERY, {
+    // Fetch all ingredients for the user using the GraphQL client
+    // The query is executed with the user's ID as a filter
+    // The fetchPolicy is set to 'no-cache' to ensure fresh data is fetched from the server
+    const response = await graphqlClient.query({
+      query: GET_ALL_INGREDIENTS_QUERY,
+      variables: {
       filter: { userId: user?._id || '' },
+      },
+      fetchPolicy: 'no-cache',
     });
-    return data.ingredientByUserId;
+    // Return the list of ingredients for the user
+    return response.data.ingredientByUserId;
   } catch (error) {
+    // Log any errors that occur during the fetch operation
     console.error("Error fetching ingredients:", error);
     throw error;
   }
 };
 
+// Function to create a new ingredient
+// This function takes a GraphQL client and an ingredient object as parameters
 export const createIngredient = async (
-  graphqlClient: any,
+  graphqlClient: ApolloClient<NormalizedCacheObject>,
   ingredient: Omit<Ingredient, "_id">
 ) => {
   try {
-    const data = await graphqlClient.request(CREATE_INGREDIENT_MUTATION, {
-      record: ingredient,
-    });
-    return data.ingredientCreateOne.record;
+    // Send ingredient data in creation request
+    const response = await graphqlClient.mutate(
+      {
+        mutation: CREATE_INGREDIENT_MUTATION,
+        variables: {
+          record: ingredient,
+        },
+      }
+    );
+    // Return the created ingredient record
+    return response.data.ingredientCreateOne.record;
   } catch (error) {
+    // Log any errors that occur during the creation operation
     console.error("Error creating ingredient:", error);
     throw error;
   }
 };
 
+// Function to update an existing ingredient
+// This function takes a GraphQL client, an ingredient ID, a user ID, and an ingredient object as parameters
 export const updateIngredient = async (
-  graphqlClient: any,
+  graphqlClient: ApolloClient<NormalizedCacheObject>,
   id: string,
+  userId: string,
   ingredient: Partial<Ingredient>
 ) => {
   try {
-    // Ensure the ingredient object contains the necessary fields for the update
-    const { _id, ...newIngredient } = ingredient;
-    const data = await graphqlClient.request(UPDATE_INGREDIENT_MUTATION, {
-      id,
-      record: newIngredient,
+    // // Create a clean input object for the mutation
+    // const cleanInput: Record<string, any> = {};
+    
+    // // Copy relevant fields, omitting __typename and _id
+    // if ('userId' in ingredient && ingredient.userId) cleanInput.userId = ingredient.userId;
+    // if ('name' in ingredient && ingredient.name) cleanInput.name = ingredient.name;
+    // if ('quantity' in ingredient) cleanInput.quantity = ingredient.quantity;
+    // if ('unit' in ingredient && ingredient.unit) cleanInput.unit = ingredient.unit;
+    // if ('price' in ingredient) cleanInput.price = ingredient.price;
+    
+    // // Handle macros separately to remove __typename
+    // if (ingredient.macros) {
+    //   cleanInput.macros = {
+    //     calories: ingredient.macros.calories,
+    //     protein: ingredient.macros.protein,
+    //     carbs: ingredient.macros.carbs,
+    //     fat: ingredient.macros.fat
+    //   };
+    // }
+
+    const {_id, ...cleanIngredient}: any = ingredient; // Destructure to omit _id
+    // Remove __typename from macros if it exists
+    delete cleanIngredient.__typename;
+    delete cleanIngredient.macros?.__typename
+
+    const response = await graphqlClient.mutate({
+      mutation: UPDATE_INGREDIENT_MUTATION,
+      variables: {
+        filter: {
+          _id: id,
+          userId: userId,
+        },
+        record: cleanIngredient,
+      },
     });
-    return data.ingredientUpdateById.recordId;
+    // Return the updated ingredient record ID
+    return response.data.ingredientUpdateOne.recordId;
   } catch (error) {
+    // Log any errors that occur during the update operation
     console.error("Error updating ingredient:", error);
     throw error;
   }
 };
 
+// Function to delete an ingredient
+// This function takes a GraphQL client, an ingredient ID, and a user ID as parameters
 export const deleteIngredient = async (
-  graphqlClient: any,
-  id: string
+  graphqlClient: ApolloClient<NormalizedCacheObject>,
+  id: string,
+  userId: string
 ) => {
   try {
-    const data = await graphqlClient.request(DELETE_INGREDIENT_MUTATION, {
-      id,
+    // Send delete request with the ingredient ID and user ID
+    const response = await graphqlClient.mutate({
+      mutation: DELETE_INGREDIENT_MUTATION,
+      variables: {
+        filter: {
+          _id: id,
+          userId: userId,
+        }
+      },
     });
-    return data.ingredientRemoveById.recordId;
+    // Return the deleted ingredient record ID
+    return response.data.ingredientRemoveOne.recordId;
   } catch (error) {
+    // Log any errors that occur during the deletion operation
     console.error("Error deleting ingredient:", error);
     throw error;
   }

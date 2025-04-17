@@ -1,9 +1,11 @@
 const { schemaComposer } = require('graphql-compose');
+const mongoose = require('mongoose');
+const { pubsub } = require('../utils/pubsub');
 
 const { UserTC, UserQueries, UserMutations } = require('./schemas/UserSchema');
-const { IngredientTC, IngredientQueries, IngredientMutations } = require('./schemas/IngredientSchema');
-const { MealTC, MealQueries, MealMutations } = require('./schemas/MealSchema');
-const { MealPlanTC, MealPlanQueries, MealPlanMutations } = require('./schemas/MealPlanSchema');
+const { IngredientTC, IngredientQueries, IngredientMutations, IngredientSubscriptions } = require('./schemas/IngredientSchema');
+const { MealTC, MealQueries, MealMutations, MealSubscriptions } = require('./schemas/MealSchema');
+const { MealPlanTC, MealPlanQueries, MealPlanMutations, MealPlanSubscriptions } = require('./schemas/MealPlanSchema');
 
 schemaComposer.Query.addFields({
     ...UserQueries,
@@ -17,6 +19,12 @@ schemaComposer.Mutation.addFields({
     ...IngredientMutations,
     ...MealMutations,
     ...MealPlanMutations,
+});
+
+schemaComposer.Subscription.addFields({
+    ...IngredientSubscriptions,
+    ...MealSubscriptions,
+    ...MealPlanSubscriptions,
 });
 
 // Add custom queries and mutations for other models similarly

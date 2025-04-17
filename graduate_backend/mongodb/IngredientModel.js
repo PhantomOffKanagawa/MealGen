@@ -55,6 +55,6 @@ const IngredientSchema = new mongoose.Schema({
 });
 
 IngredientSchema.index({ userId: 1, name: 1 }, { unique: true });
-
+  
 const Ingredient = mongoose.model('Ingredient', IngredientSchema);
 module.exports = Ingredient;
