@@ -19,7 +19,7 @@ MealGen is a comprehensive meal planning and nutrition tracking application buil
 - [Real-time Updates](./Real-time-Updates.md) - Implementation of real-time data synchronization
 
 ### Frontend Systems
-- [Frontend Architecture](./Frontend-Architecture.md) - Overview of the Next.js frontend structure
+- TODO: [Frontend Architecture](./Frontend-Architecture.md) - Overview of the Next.js frontend structure
 - [State Management](./State-Management.md) - How application state is managed
 - TODO: [Component System](./Component-System.md) - Organization and reuse of UI components
 - TODO: [API Integration](./API-Integration.md) - How the frontend communicates with the backend

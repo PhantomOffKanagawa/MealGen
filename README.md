@@ -152,6 +152,7 @@ graduate_backend/
 - Add yarn prettier to package.json
 - Add wiki pages
 - Update README.md with up to date info
+- Switch .env files with dummy data and reissue api keys
 
 ## Future To-Do
 
