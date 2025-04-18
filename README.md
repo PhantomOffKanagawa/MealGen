@@ -149,7 +149,7 @@ graduate_backend/
 
 ## Now To-Do
 - Test Setup-and-Installation.md information
-- Add yarn prettier to package.json
+- ~~Add yarn prettier to package.json~~
 - ~~Add wiki pages~~
    - Finish all wiki pages
 - Update README.md with up to date info
