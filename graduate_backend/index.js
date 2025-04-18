@@ -11,7 +11,7 @@ const graphqlSchema = require("./graphql/graphqlSchema");
 const { ApolloLink } = require("@apollo/client/core");
 
 // Load environment variables
-const { mongodb_url, jwt_secret, node_env } = require("./utils/env");
+const { mongodb_url, jwt_secret, node_env, frontend_url } = require("./utils/env");
 
 // Websocket imports
 const { WebSocketServer } = require("ws");
@@ -136,7 +136,7 @@ async function startServer() {
   // Apply middleware
   app.use(
     cors({
-      origin: process.env.FRONTEND_URL || "http://localhost:3000",
+      origin: frontend_url || "http://localhost:3000",
       credentials: true,
     })
   );
