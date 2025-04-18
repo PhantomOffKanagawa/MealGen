@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NutriPlan - Smart Meal Planning",
+  title: "MealGen - Smart Meal Planning",
   description: "Plan your meals, track nutrition, and manage food costs effectively",
 };
 

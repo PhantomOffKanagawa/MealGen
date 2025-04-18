@@ -11,7 +11,6 @@ const MealTC = composeMongoose(Meal, {
 });
 
 // Define custom queries
-console.log('Meal Resolvers', MealTC.getResolvers());
 const MealQueries = {
     mealById: MealTC.mongooseResolvers.findById(),
     mealByIds: MealTC.mongooseResolvers.findByIds(),

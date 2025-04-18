@@ -19,7 +19,6 @@ const AuthPayloadTC = schemaComposer.createObjectTC({
 });
 
 // Define custom queries
-console.log('User Resolvers', UserTC.getResolvers());
 const UserQueries = {
   userById: UserTC.mongooseResolvers.findById(),
   userByIds: UserTC.mongooseResolvers.findByIds(),

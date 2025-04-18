@@ -11,7 +11,7 @@ const graphqlSchema = require("./graphql/graphqlSchema");
 const { ApolloLink } = require("@apollo/client/core");
 
 // Load environment variables
-const { mongodb_url, jwt_secret, node_env, frontend_url } = require("./utils/env");
+const { mongodb_url, jwt_secret, node_env, frontend_url, port } = require("./utils/env");
 
 // Websocket imports
 const { WebSocketServer } = require("ws");
@@ -65,7 +65,7 @@ const authenticateUser = async (req) => {
 // Start Apollo Server with Express
 async function startServer() {
   await mongoose.connect(mongodb_url);
-  console.log("MongoDB Connected");
+  console.log(`🌿 MongoDB Connected from ${mongodb_url.slice(0, 35)}${mongodb_url.length > 35 ? "..." : ""}`);
 
   const server = new ApolloServer({
     schema: graphqlSchema,
@@ -124,12 +124,6 @@ async function startServer() {
     wsServer
   );
 
-  console.log(
-    "WebSocket server is ready at ws://localhost:" +
-      (process.env.PORT || 4000) +
-      "/graphql"
-  );
-
   // Start the Apollo Server
   await server.start();
 
@@ -174,7 +168,7 @@ async function startServer() {
   });
 
   // Start Express server
-  const PORT = process.env.PORT || 4000;
+  const PORT = port || 4000;
   httpServer.listen(PORT, () => {
     console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`);
     console.log(`🕸️  Web sockets ready at ws://localhost:${PORT}/graphql`);

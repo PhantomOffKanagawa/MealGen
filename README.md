@@ -1,10 +1,10 @@
-# NutriPlan - Smart Meal Planning Application
+# MealGen - Smart Meal Planning Application
 
 A comprehensive meal planning and nutrition tracking application built with Next.js, GraphQL, Apollo Server, and MongoDB.
 
 ## Project Overview
 
-NutriPlan helps users plan meals, track nutrition, and manage food costs effectively. The application allows users to:
+MealGen helps users plan meals, track nutrition, and manage food costs effectively. The application allows users to:
 
 - Create and manage ingredients with nutritional information and costs
 - Build meals by combining ingredients with automatic nutrition calculation
@@ -146,3 +146,17 @@ graduate_backend/
 - Material UI is integrated with Next.js for consistent styling
 - GraphQL is used for efficient data fetching with minimal overfetching
 - MongoDB schemas are automatically converted to GraphQL types using GraphQL Compose
+
+## Now To-Do
+- Test Setup-and-Installation.md information
+- Add yarn prettier to package.json
+- Add wiki pages
+- Update README.md with up to date info
+
+## Future To-Do
+
+- Implement error handling and logging on frontend
+- Implement more aggressive mongodb validation rules
+- Implement automatic calculation and recalculation for nutritional values
+- Implement more consistent live update handling
+- Implement shared meal plans between users

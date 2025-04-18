@@ -39,6 +39,7 @@ const wrapMutationAndPublish = (resolver, eventName) => {
       const topic = `${eventName}.${accessedUserId}`;      // Publish the event with the record and the sourceClientId
       pubsub.publish(topic, {
         // The subscription payload depends on the event type
+        // TODO: Add more event types as needed (currently doesn't use this info so not needed)
         ...(eventName === 'INGREDIENT_UPDATED' 
           ? { ingredientUpdated: payload.record } 
           : { mealUpdated: payload.record }),
