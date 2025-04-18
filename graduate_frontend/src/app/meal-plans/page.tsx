@@ -477,19 +477,6 @@ const MealPlansPage: React.FC = () => {
     });
   };
 
-  /**
-   * Helper function to find item name by id
-   */
-  const getItemName = (type: string, itemId: string) => {
-    if (type === "ingredient") {
-      const ingredient = ingredients.find((i) => i._id === itemId);
-      return ingredient ? ingredient.name : "Unknown";
-    } else {
-      const meal = meals.find((m) => m._id === itemId);
-      return meal ? meal.name : "Unknown";
-    }
-  };
-
   // Define table columns with unique ids
   const columns: Column[] = [
     {

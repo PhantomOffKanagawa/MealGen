@@ -272,6 +272,75 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
     // Update the previouslyOpen tracking variable
     setPreviouslyOpen(open);
   }, [open, currentMealPlan, defaultColumns, defaultItems, initialized]);
+
+  // Listen for new ingredients coming from websocket updates
+  useEffect(() => {
+    if (initialized && open) {
+      // Get all ingredient IDs currently in meal plan groups
+      const inUseIngredientIds = new Set<string>();
+      mealPlanOrder.forEach(groupId => {
+        if (items[groupId]) {
+          items[groupId].forEach(itemId => {
+            if (itemsData[itemId]?.type === "ingredient") {
+              inUseIngredientIds.add(itemId);
+            }
+          });
+        }
+      });
+
+      // Get current ingredient store IDs
+      const currentIngredientStoreIds = new Set(items["ingredients-store"] || []);
+      
+      // Find new ingredient IDs that aren't in the store or in use
+      const newIngredientIds = ingredientItems
+        .map(ing => ing.id)
+        .filter(id => !currentIngredientStoreIds.has(id) && !inUseIngredientIds.has(id));
+      
+      // If we have new ingredients, update the ingredients store
+      if (newIngredientIds.length > 0) {
+        console.log("Adding new ingredients to store:", newIngredientIds);
+        setItems(prev => ({
+          ...prev,
+          "ingredients-store": [...prev["ingredients-store"], ...newIngredientIds]
+        }));
+      }
+    }
+  }, [ingredients, initialized, open, items, mealPlanOrder, itemsData, ingredientItems]);
+
+  // Listen for new meals coming from websocket updates
+  useEffect(() => {
+    if (initialized && open) {
+      // Get all meal IDs currently in meal plan groups
+      const inUseMealIds = new Set<string>();
+      mealPlanOrder.forEach(groupId => {
+        if (items[groupId]) {
+          items[groupId].forEach(itemId => {
+            if (itemsData[itemId]?.type === "meal") {
+              inUseMealIds.add(itemId);
+            }
+          });
+        }
+      });
+
+      // Get current meal store IDs
+      const currentMealStoreIds = new Set(items["meals-store"] || []);
+      
+      // Find new meal IDs that aren't in the store or in use
+      const newMealIds = mealItems
+        .map(meal => meal.id)
+        .filter(id => !currentMealStoreIds.has(id) && !inUseMealIds.has(id));
+      
+      // If we have new meals, update the meals store
+      if (newMealIds.length > 0) {
+        console.log("Adding new meals to store:", newMealIds);
+        setItems(prev => ({
+          ...prev,
+          "meals-store": [...prev["meals-store"], ...newMealIds]
+        }));
+      }
+    }
+  }, [meals, initialized, open, items, mealPlanOrder, itemsData, mealItems]);
+  
   // Recalculate nutrition whenever items or quantities change
   useEffect(() => {
     if (initialized) {

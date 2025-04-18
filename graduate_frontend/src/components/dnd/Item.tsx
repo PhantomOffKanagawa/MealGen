@@ -13,8 +13,6 @@ import {
   Stack,
   Tooltip,
   Divider,
-  Switch,
-  FormControlLabel,
   useTheme,
   alpha,
 } from "@mui/material";
@@ -70,17 +68,10 @@ export function Item({
     accept: "item",
     group: column,
   });
+
   // Local quantity state that syncs with props
   const [itemQuantity, setItemQuantity] = useState(quantity);
-  
-  // State for tracking whether we're in unit mode (true) or raw quantity mode (false)
-  const [unitMode, setUnitMode] = useState(false);
-  
-  // Calculate displayed value based on mode
-  const displayedQuantity = unitMode 
-    ? Math.round((itemQuantity / unitQuantity) * 100) / 100 // In unit mode, show units (quantity divided by unitQuantity)
-    : itemQuantity; // In raw mode, show raw quantity
-    
+
   // Show quantity controls only for items in meal plan columns, not in stores
   const showQuantityControls = !["ingredients-store", "meals-store"].includes(
     column
@@ -111,30 +102,21 @@ export function Item({
     },
     [id, onQuantityChange]
   );
+
   // Handle quantity changes
   const handleQuantityChange = useCallback(
-    (newDisplayedQuantity: number) => {
+    (newQuantity: number) => {
       // Prevent negative quantities
-      if (newDisplayedQuantity <= 0) newDisplayedQuantity = 1;
-      
-      // Convert from displayed quantity to actual quantity based on mode
-      const actualQuantity = unitMode
-        ? Math.round(newDisplayedQuantity * unitQuantity)
-        : newDisplayedQuantity;
+      if (newQuantity <= 0) newQuantity = 1;
 
       // Update local state immediately for responsive UI
-      setItemQuantity(actualQuantity);
+      setItemQuantity(newQuantity);
 
       // Notify parent with debounce
-      debouncedNotifyChange(actualQuantity);
+      debouncedNotifyChange(newQuantity);
     },
-    [debouncedNotifyChange, unitMode, unitQuantity]
+    [debouncedNotifyChange]
   );
-  
-  // Handle toggling between unit mode and raw quantity mode
-  const handleModeToggle = useCallback(() => {
-    setUnitMode(prevMode => !prevMode);
-  }, []);
   return (
     <Card
       ref={ref}
@@ -261,7 +243,6 @@ export function Item({
                 >
                   {isIngredient ? "Ingredient" : "Meal"}
                 </Typography>
-                {type == "ingredient" && (
                 <Typography
                   variant="caption"
                   color="text.secondary"
@@ -269,7 +250,6 @@ export function Item({
                 >
                   • {unitQuantity * itemQuantity} {unit}
                 </Typography>
-                )}
               </Box>
             </Box>{" "}
             {/* No nutrition data in top row for store items */}
@@ -531,109 +511,115 @@ export function Item({
               )}
             </Stack>
           )}
-        </Box>        {/* Quantity controls - compact version, only show for items in meal plans */}
+        </Box>
+        {/* Quantity controls - compact version, only show for items in meal plans */}
         {showQuantityControls && (
-          <Box>
-            {/* Toggle switch for quantity mode */}
-            <Box 
-              display="flex" 
-              justifyContent="flex-end" 
-              alignItems="center"
-              mb={0.5}
+          <Box
+            mt={1}
+            display="flex"
+            justifyContent="flex-end"
+            alignItems="center"
+          >
+            <ButtonGroup
+              size="small"
+              variant="outlined"
+              color={isIngredient ? "success" : "secondary"}
+              sx={{
+                borderRadius: "8px",
+                "& .MuiButtonGroup-grouped": {
+                  border: isIngredient
+                    ? `1px solid ${alpha(theme.palette.success.main, 0.5)}`
+                    : `1px solid ${alpha(theme.palette.secondary.main, 0.5)}`,
+                },
+              }}
             >
-              <Tooltip title={`Switch to ${unitMode ? 'direct quantity' : 'unit count'} mode`} arrow>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      size="small"
-                      checked={unitMode}
-                      onChange={handleModeToggle}
-                      sx={{
-                        '& .MuiSwitch-switchBase.Mui-checked': {
-                          color: isIngredient 
-                            ? theme.palette.success.main 
-                            : theme.palette.secondary.main,
-                        },
-                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                          backgroundColor: isIngredient 
-                            ? theme.palette.success.main 
-                            : theme.palette.secondary.main,
-                        },
-                      }}
-                    />
-                  }
-                  label={
-                    <Typography 
-                      variant="caption" 
-                      sx={{ 
-                        fontSize: "0.65rem",
-                        color: theme.palette.text.secondary,
-                      }}
-                    >
-                      {unitMode ? 'Units' : 'Quantity'}
-                    </Typography>
-                  }
-                  labelPlacement="start"
-                  sx={{ 
-                    margin: 0, 
-                    '& .MuiFormControlLabel-label': { 
-                      marginRight: 0.5 
-                    } 
-                  }}
-                />
-              </Tooltip>
-            </Box>
-
-            {/* Quantity input controls */}
-            <Box
-              display="flex"
-              justifyContent="flex-end"
-              alignItems="center"
-            >
-              <ButtonGroup
+              <IconButton
                 size="small"
-                variant="outlined"
-                color={isIngredient ? "success" : "secondary"}
+                onClick={() => handleQuantityChange(itemQuantity - 1)}
+                disabled={itemQuantity <= 1}
                 sx={{
-                  borderRadius: "8px",
-                  "& .MuiButtonGroup-grouped": {
-                    border: isIngredient
-                      ? `1px solid ${alpha(theme.palette.success.main, 0.5)}`
-                      : `1px solid ${alpha(theme.palette.secondary.main, 0.5)}`,
+                  backgroundColor: alpha(theme.palette.background.paper, 0.8),
+                  backdropFilter: "blur(8px)",
+                  width: "24px",
+                  height: "24px",
+                  minWidth: "24px",
+                  borderRadius: "4px",
+                  border: `1px solid ${alpha(
+                    isIngredient
+                      ? theme.palette.success.main
+                      : theme.palette.secondary.main,
+                    0.5
+                  )}`,
+                  boxShadow: `0 0 5px ${alpha(
+                    isIngredient
+                      ? theme.palette.success.main
+                      : theme.palette.secondary.main,
+                    0.2
+                  )}`,
+                  color: isIngredient
+                    ? theme.palette.success.main
+                    : theme.palette.secondary.main,
+                  padding: 0,
+                  "&:hover": {
+                    backgroundColor: isIngredient
+                      ? alpha(theme.palette.success.main, 0.15)
+                      : alpha(theme.palette.secondary.main, 0.15),
+                    boxShadow: `0 0 8px ${alpha(
+                      isIngredient
+                        ? theme.palette.success.main
+                        : theme.palette.secondary.main,
+                      0.4
+                    )}`,
+                  },
+                  "&:disabled": {
+                    opacity: 0.3,
+                    boxShadow: "none",
                   },
                 }}
               >
-                <IconButton
-                  size="small"
-                  onClick={() => handleQuantityChange(displayedQuantity - (unitMode ? 0.5 : 1))}
-                  disabled={displayedQuantity <= (unitMode ? 0.5 : 1)}
-                  sx={{
-                    backgroundColor: alpha(theme.palette.background.paper, 0.8),
-                    backdropFilter: "blur(8px)",
-                    width: "24px",
-                    height: "24px",
-                    minWidth: "24px",
-                    borderRadius: "4px",
-                    border: `1px solid ${alpha(
-                      isIngredient
-                        ? theme.palette.success.main
-                        : theme.palette.secondary.main,
-                      0.5
-                    )}`,
-                    boxShadow: `0 0 5px ${alpha(
-                      isIngredient
-                        ? theme.palette.success.main
-                        : theme.palette.secondary.main,
-                      0.2
-                    )}`,
+                <RemoveIcon style={{ fontSize: "14px" }} />
+              </IconButton>
+
+              <TextField
+                size="small"
+                value={itemQuantity}
+                onChange={(e) =>
+                  handleQuantityChange(parseInt(e.target.value) || 1)
+                }
+                inputProps={{
+                  style: {
+                    width: "28px",
+                    padding: "1px 0px",
+                    textAlign: "center",
                     color: isIngredient
                       ? theme.palette.success.main
                       : theme.palette.secondary.main,
-                    padding: 0,
+                    fontWeight: "bold",
+                    fontSize: "0.8rem",
+                  },
+                  min: 1,
+                  max: 99,
+                }}
+                sx={{
+                  margin: "0 2px",
+                  backgroundColor: alpha(theme.palette.background.paper, 0.9),
+                  borderRadius: "4px",
+                  border: `1px solid ${alpha(
+                    isIngredient
+                      ? theme.palette.success.main
+                      : theme.palette.secondary.main,
+                    0.5
+                  )}`,
+                  boxShadow: `0 0 5px ${alpha(
+                    isIngredient
+                      ? theme.palette.success.main
+                      : theme.palette.secondary.main,
+                    0.2
+                  )}`,
+                  "& .MuiOutlinedInput-root": {
+                    height: "24px",
+                    "& fieldset": { border: "none" },
                     "&:hover": {
-                      backgroundColor: isIngredient
-                        ? alpha(theme.palette.success.main, 0.15)
-                        : alpha(theme.palette.secondary.main, 0.15),
                       boxShadow: `0 0 8px ${alpha(
                         isIngredient
                           ? theme.palette.success.main
@@ -641,126 +627,52 @@ export function Item({
                         0.4
                       )}`,
                     },
-                    "&:disabled": {
-                      opacity: 0.3,
-                      boxShadow: "none",
-                    },
-                  }}
-                >
-                  <RemoveIcon style={{ fontSize: "14px" }} />
-                </IconButton>
+                  },
+                }}
+              />
 
-                <TextField
-                  size="small"
-                  value={displayedQuantity}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    const parsedValue = unitMode 
-                      ? parseFloat(value) || 0.5 
-                      : parseInt(value) || 1;
-                    handleQuantityChange(parsedValue);
-                  }}
-                  inputProps={{
-                    style: {
-                      width: unitMode ? "34px" : "28px",
-                      padding: "1px 0px",
-                      textAlign: "center",
-                      color: isIngredient
-                        ? theme.palette.success.main
-                        : theme.palette.secondary.main,
-                      fontWeight: "bold",
-                      fontSize: "0.8rem",
-                    },
-                    min: unitMode ? 0.5 : 1,
-                    step: unitMode ? 0.5 : 1,
-                  }}
-                  sx={{
-                    margin: "0 2px",
-                    backgroundColor: alpha(theme.palette.background.paper, 0.9),
-                    borderRadius: "4px",
-                    border: `1px solid ${alpha(
-                      isIngredient
-                        ? theme.palette.success.main
-                        : theme.palette.secondary.main,
-                      0.5
-                    )}`,
-                    boxShadow: `0 0 5px ${alpha(
-                      isIngredient
-                        ? theme.palette.success.main
-                        : theme.palette.secondary.main,
-                      0.2
-                    )}`,
-                    "& .MuiOutlinedInput-root": {
-                      height: "24px",
-                      "& fieldset": { border: "none" },
-                      "&:hover": {
-                        boxShadow: `0 0 8px ${alpha(
-                          isIngredient
-                            ? theme.palette.success.main
-                            : theme.palette.secondary.main,
-                          0.4
-                        )}`,
-                      },
-                    },
-                  }}
-                />
-
-                <IconButton
-                  size="small"
-                  onClick={() => handleQuantityChange(displayedQuantity + (unitMode ? 0.5 : 1))}
-                  sx={{
-                    backgroundColor: alpha(theme.palette.background.paper, 0.8),
-                    backdropFilter: "blur(8px)",
-                    width: "24px",
-                    height: "24px",
-                    minWidth: "24px",
-                    borderRadius: "4px",
-                    border: `1px solid ${alpha(
-                      isIngredient
-                        ? theme.palette.success.main
-                        : theme.palette.secondary.main,
-                      0.5
-                    )}`,
-                    boxShadow: `0 0 5px ${alpha(
-                      isIngredient
-                        ? theme.palette.success.main
-                        : theme.palette.secondary.main,
-                      0.2
-                    )}`,
-                    color: isIngredient
+              <IconButton
+                size="small"
+                onClick={() => handleQuantityChange(itemQuantity + 1)}
+                sx={{
+                  backgroundColor: alpha(theme.palette.background.paper, 0.8),
+                  backdropFilter: "blur(8px)",
+                  width: "24px",
+                  height: "24px",
+                  minWidth: "24px",
+                  borderRadius: "4px",
+                  border: `1px solid ${alpha(
+                    isIngredient
                       ? theme.palette.success.main
                       : theme.palette.secondary.main,
-                    padding: 0,
-                    "&:hover": {
-                      backgroundColor: isIngredient
-                        ? alpha(theme.palette.success.main, 0.15)
-                        : alpha(theme.palette.secondary.main, 0.15),
-                      boxShadow: `0 0 8px ${alpha(
-                        isIngredient
-                          ? theme.palette.success.main
-                          : theme.palette.secondary.main,
-                        0.4
-                      )}`,
-                    },
-                  }}
-                >
-                  <AddIcon style={{ fontSize: "14px" }} />
-                </IconButton>
-              </ButtonGroup>
-              
-              {/* Unit indicator */}
-              <Typography
-                variant="caption"
-                sx={{ 
-                  ml: 0.75, 
-                  fontSize: "0.7rem",
-                  color: alpha(theme.palette.text.primary, 0.7),
-                  fontWeight: "medium"
+                    0.5
+                  )}`,
+                  boxShadow: `0 0 5px ${alpha(
+                    isIngredient
+                      ? theme.palette.success.main
+                      : theme.palette.secondary.main,
+                    0.2
+                  )}`,
+                  color: isIngredient
+                    ? theme.palette.success.main
+                    : theme.palette.secondary.main,
+                  padding: 0,
+                  "&:hover": {
+                    backgroundColor: isIngredient
+                      ? alpha(theme.palette.success.main, 0.15)
+                      : alpha(theme.palette.secondary.main, 0.15),
+                    boxShadow: `0 0 8px ${alpha(
+                      isIngredient
+                        ? theme.palette.success.main
+                        : theme.palette.secondary.main,
+                      0.4
+                    )}`,
+                  },
                 }}
               >
-                {unitMode ? "units" : unit}
-              </Typography>
-            </Box>
+                <AddIcon style={{ fontSize: "14px" }} />
+              </IconButton>
+            </ButtonGroup>
           </Box>
         )}
       </CardContent>

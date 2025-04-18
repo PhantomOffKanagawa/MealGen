@@ -52,7 +52,7 @@ const MealEditDialog: React.FC<MealEditDialogProps> = ({
 
   const getIngredientNameById = (id: string): string => {
     const ingredient = ingredients.find(i => i._id === id);
-    return ingredient ? ingredient.name : 'Unknown Ingredient';
+    return ingredient ? ingredient.name : 'Deleted Ingredient';
   };
 
   return (
