@@ -16,7 +16,7 @@ import {
   Grid,
   Snackbar,
   Typography,
-  useTheme
+  useTheme,
 } from "@mui/material";
 import dynamic from "next/dynamic";
 import React, { useCallback, useEffect, useState } from "react";

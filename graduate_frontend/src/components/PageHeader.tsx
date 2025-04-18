@@ -6,7 +6,7 @@ import {
   Button,
   SvgIconProps,
   Typography,
-  useTheme
+  useTheme,
 } from "@mui/material";
 import React from "react";
 

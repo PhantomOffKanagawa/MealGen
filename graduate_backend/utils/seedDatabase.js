@@ -240,17 +240,19 @@ async function seedDatabase() {
           name: 'Weekly Meal Plan',
           items: [...mealItems, ...ingredientItems],
           macros: {
-            calories: 2000,
-            protein: 120,
-            carbs: 250,
-            fat: 65
-          }
+            calories: 1947,
+            protein: 130,
+            carbs: 243.5,
+            fat: 50.5
+          },
+          price: 20.16
         });
 
         // Create a second meal plan
         await MealPlan.create({
           userId: user._id,
-          name: 'Weight Loss Plan',          items: [
+          name: 'Weight Loss Plan',
+          items: [
             {
               type: 'meal',
               itemId: userMeals.find(m => m.name === 'Spinach Omelette')._id,
@@ -271,11 +273,12 @@ async function seedDatabase() {
             }
           ],
           macros: {
-            calories: 1500,
-            protein: 100,
-            carbs: 120,
-            fat: 50
-          }
+            calories: 421,
+            protein: 130,
+            carbs: 3,
+            fat: 29
+          },
+          price: 8.64
         });
       }
     }

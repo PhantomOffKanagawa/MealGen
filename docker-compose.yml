@@ -36,9 +36,9 @@ services:
       - mongodb
     networks:
       - mealgen-network
-    # volumes:
-      # - ./graduate_backend:/app
-      # - /app/node_modules
+    volumes:
+      - ./graduate_backend/src:/app/src
+      - /app/node_modules
 
   # Frontend service (Next.js)
   frontend:
