@@ -1,18 +1,26 @@
 /**
  * ItemFormTabs Component
- * 
+ *
  * A tabbed interface that allows users to add ingredients or meals to a meal plan.
  * Provides fields for selecting items, quantities, and organizing them into groups.
  */
-import React from 'react';
+import React from "react";
 import {
-  Tabs, Tab, Box, FormControl, InputLabel, Select,
-  MenuItem, TextField, Button, Grid
-} from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import { Ingredient } from '../../services/ingredientService';
-import { Meal } from '../../services/mealService';
-import { MealPlanItem } from '../../services/mealPlanService';
+  Tabs,
+  Tab,
+  Box,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  TextField,
+  Button,
+  Grid,
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import { Ingredient } from "../../services/ingredientService";
+import { Meal } from "../../services/mealService";
+import { MealPlanItem } from "../../services/mealPlanService";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -31,11 +39,7 @@ function TabPanel(props: TabPanelProps) {
       aria-labelledby={`meal-plan-tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          {children}
-        </Box>
-      )}
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
   );
 }
@@ -46,12 +50,14 @@ interface ItemFormTabsProps {
   ingredients: Ingredient[];
   meals: Meal[];
   currentItem: MealPlanItem;
-  onItemChange: (e: React.ChangeEvent<{ name?: string; value: unknown }>) => void;
+  onItemChange: (
+    e: React.ChangeEvent<{ name?: string; value: unknown }>,
+  ) => void;
   availableGroups: string[];
   newGroup: string;
   onNewGroupChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onAddGroup: () => void;
-  onAddItem: (type: 'ingredient' | 'meal') => void;
+  onAddItem: (type: "ingredient" | "meal") => void;
 }
 
 const ItemFormTabs: React.FC<ItemFormTabsProps> = ({
@@ -65,7 +71,7 @@ const ItemFormTabs: React.FC<ItemFormTabsProps> = ({
   newGroup,
   onNewGroupChange,
   onAddGroup,
-  onAddItem
+  onAddItem,
 }) => {
   // Common group selection and new group fields for both tabs
   const renderGroupSelectionFields = () => (
@@ -88,7 +94,7 @@ const ItemFormTabs: React.FC<ItemFormTabsProps> = ({
           </Select>
         </FormControl>
       </Grid>
-      
+
       <Grid size={12} container spacing={1}>
         <Grid size={9}>
           <TextField
@@ -99,10 +105,10 @@ const ItemFormTabs: React.FC<ItemFormTabsProps> = ({
           />
         </Grid>
         <Grid size={3}>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             onClick={onAddGroup}
-            sx={{ height: '100%', width: '100%' }}
+            sx={{ height: "100%", width: "100%" }}
           >
             Add Group
           </Button>
@@ -114,15 +120,21 @@ const ItemFormTabs: React.FC<ItemFormTabsProps> = ({
   return (
     <>
       <Tabs value={tabValue} onChange={onTabChange} aria-label="item type tabs">
-        <Tab label="Ingredients" id="ingredients-tab" aria-controls="ingredients-panel" />
+        <Tab
+          label="Ingredients"
+          id="ingredients-tab"
+          aria-controls="ingredients-panel"
+        />
         <Tab label="Meals" id="meals-tab" aria-controls="meals-panel" />
       </Tabs>
-      
+
       <TabPanel value={tabValue} index={0}>
         <Grid container spacing={2}>
           <Grid size={12}>
             <FormControl fullWidth margin="normal">
-              <InputLabel id="ingredient-select-label">Select Ingredient</InputLabel>
+              <InputLabel id="ingredient-select-label">
+                Select Ingredient
+              </InputLabel>
               <Select
                 labelId="ingredient-select-label"
                 name="itemId"
@@ -141,7 +153,7 @@ const ItemFormTabs: React.FC<ItemFormTabsProps> = ({
               </Select>
             </FormControl>
           </Grid>
-          
+
           <Grid size={12}>
             <TextField
               name="quantity"
@@ -154,13 +166,13 @@ const ItemFormTabs: React.FC<ItemFormTabsProps> = ({
               inputProps={{ min: 0.1, step: 0.1 }}
             />
           </Grid>
-          
+
           {renderGroupSelectionFields()}
-          
+
           <Grid size={12}>
-            <Button 
-              variant="contained" 
-              color="primary" 
+            <Button
+              variant="contained"
+              color="primary"
               onClick={() => onAddItem("ingredient")}
               fullWidth
               startIcon={<AddIcon />}
@@ -171,7 +183,7 @@ const ItemFormTabs: React.FC<ItemFormTabsProps> = ({
           </Grid>
         </Grid>
       </TabPanel>
-      
+
       <TabPanel value={tabValue} index={1}>
         <Grid container spacing={2}>
           <Grid size={12}>
@@ -195,7 +207,7 @@ const ItemFormTabs: React.FC<ItemFormTabsProps> = ({
               </Select>
             </FormControl>
           </Grid>
-          
+
           <Grid size={12}>
             <TextField
               name="quantity"
@@ -208,13 +220,13 @@ const ItemFormTabs: React.FC<ItemFormTabsProps> = ({
               inputProps={{ min: 0.1, step: 0.1 }}
             />
           </Grid>
-          
+
           {renderGroupSelectionFields()}
-          
+
           <Grid size={12}>
-            <Button 
-              variant="contained" 
-              color="primary" 
+            <Button
+              variant="contained"
+              color="primary"
               onClick={() => onAddItem("meal")}
               fullWidth
               startIcon={<AddIcon />}

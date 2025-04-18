@@ -145,7 +145,7 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
         isFixed: true,
       },
     }),
-    []
+    [],
   );
 
   // Default item collections
@@ -154,7 +154,7 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
       "ingredients-store": ingredientItems.map((i) => i.id),
       "meals-store": mealItems.map((m) => m.id),
     }),
-    [ingredientItems, mealItems]
+    [ingredientItems, mealItems],
   );
 
   // State to track if initial setup is done
@@ -252,7 +252,7 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
               "ingredients-store"
             ].filter((id) => !groupItemIds.includes(id));
             newItems["meals-store"] = newItems["meals-store"].filter(
-              (id) => !groupItemIds.includes(id)
+              (id) => !groupItemIds.includes(id),
             );
           }
         });
@@ -278,9 +278,9 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
     if (initialized && open) {
       // Get all ingredient IDs currently in meal plan groups
       const inUseIngredientIds = new Set<string>();
-      mealPlanOrder.forEach(groupId => {
+      mealPlanOrder.forEach((groupId) => {
         if (items[groupId]) {
-          items[groupId].forEach(itemId => {
+          items[groupId].forEach((itemId) => {
             if (itemsData[itemId]?.type === "ingredient") {
               inUseIngredientIds.add(itemId);
             }
@@ -289,32 +289,48 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
       });
 
       // Get current ingredient store IDs
-      const currentIngredientStoreIds = new Set(items["ingredients-store"] || []);
-      
+      const currentIngredientStoreIds = new Set(
+        items["ingredients-store"] || [],
+      );
+
       // Find new ingredient IDs that aren't in the store or in use
       const newIngredientIds = ingredientItems
-        .map(ing => ing.id)
-        .filter(id => !currentIngredientStoreIds.has(id) && !inUseIngredientIds.has(id));
-      
+        .map((ing) => ing.id)
+        .filter(
+          (id) =>
+            !currentIngredientStoreIds.has(id) && !inUseIngredientIds.has(id),
+        );
+
       // If we have new ingredients, update the ingredients store
       if (newIngredientIds.length > 0) {
         console.log("Adding new ingredients to store:", newIngredientIds);
-        setItems(prev => ({
+        setItems((prev) => ({
           ...prev,
-          "ingredients-store": [...prev["ingredients-store"], ...newIngredientIds]
+          "ingredients-store": [
+            ...prev["ingredients-store"],
+            ...newIngredientIds,
+          ],
         }));
       }
     }
-  }, [ingredients, initialized, open, items, mealPlanOrder, itemsData, ingredientItems]);
+  }, [
+    ingredients,
+    initialized,
+    open,
+    items,
+    mealPlanOrder,
+    itemsData,
+    ingredientItems,
+  ]);
 
   // Listen for new meals coming from websocket updates
   useEffect(() => {
     if (initialized && open) {
       // Get all meal IDs currently in meal plan groups
       const inUseMealIds = new Set<string>();
-      mealPlanOrder.forEach(groupId => {
+      mealPlanOrder.forEach((groupId) => {
         if (items[groupId]) {
-          items[groupId].forEach(itemId => {
+          items[groupId].forEach((itemId) => {
             if (itemsData[itemId]?.type === "meal") {
               inUseMealIds.add(itemId);
             }
@@ -324,23 +340,23 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
 
       // Get current meal store IDs
       const currentMealStoreIds = new Set(items["meals-store"] || []);
-      
+
       // Find new meal IDs that aren't in the store or in use
       const newMealIds = mealItems
-        .map(meal => meal.id)
-        .filter(id => !currentMealStoreIds.has(id) && !inUseMealIds.has(id));
-      
+        .map((meal) => meal.id)
+        .filter((id) => !currentMealStoreIds.has(id) && !inUseMealIds.has(id));
+
       // If we have new meals, update the meals store
       if (newMealIds.length > 0) {
         console.log("Adding new meals to store:", newMealIds);
-        setItems(prev => ({
+        setItems((prev) => ({
           ...prev,
-          "meals-store": [...prev["meals-store"], ...newMealIds]
+          "meals-store": [...prev["meals-store"], ...newMealIds],
         }));
       }
     }
   }, [meals, initialized, open, items, mealPlanOrder, itemsData, mealItems]);
-  
+
   // Recalculate nutrition whenever items or quantities change
   useEffect(() => {
     if (initialized) {
@@ -473,7 +489,7 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
       initialized,
       savingLiveEdit,
       hasMealPlanChanged,
-    ]
+    ],
   );
 
   // Effect to trigger auto-save when changes are made and live edit is on
@@ -528,7 +544,7 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
           }
           return total;
         },
-        { calories: 0, protein: 0, carbs: 0, fat: 0 }
+        { calories: 0, protein: 0, carbs: 0, fat: 0 },
       ) || { calories: 0, protein: 0, carbs: 0, fat: 0 }
     );
   };
@@ -715,7 +731,7 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
             background: (theme) =>
               `linear-gradient(90deg, ${alpha(
                 theme.palette.primary.dark,
-                0.95
+                0.95,
               )}, ${alpha(theme.palette.primary.main, 0.9)})`,
             boxShadow: (theme) =>
               `0 0 20px ${alpha(theme.palette.primary.main, 0.5)}`,
@@ -752,125 +768,125 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
             </Typography>{" "}
             <Box
               sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 1.5,
-              height: 48, // Ensures consistent height for all controls
-              minHeight: 48,
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                height: 48, // Ensures consistent height for all controls
+                minHeight: 48,
               }}
             >
               <Button
-              color="inherit"
-              startIcon={<AddIcon />}
-              onClick={addNewGroup}
-              sx={{
-                mr: 1.5,
-                borderRadius: 2,
-                px: 2,
-                py: 1,
-                bgcolor: (theme) => alpha(theme.palette.common.white, 0.1),
-                backdropFilter: "blur(8px)",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                height: 40,
-                minWidth: 110,
-                "&:hover": {
-                bgcolor: (theme) => alpha(theme.palette.common.white, 0.2),
-                boxShadow: "0 0 15px rgba(255, 255, 255, 0.2)",
-                },
-                transition: "all 0.2s ease",
-              }}
+                color="inherit"
+                startIcon={<AddIcon />}
+                onClick={addNewGroup}
+                sx={{
+                  mr: 1.5,
+                  borderRadius: 2,
+                  px: 2,
+                  py: 1,
+                  bgcolor: (theme) => alpha(theme.palette.common.white, 0.1),
+                  backdropFilter: "blur(8px)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  height: 40,
+                  minWidth: 110,
+                  "&:hover": {
+                    bgcolor: (theme) => alpha(theme.palette.common.white, 0.2),
+                    boxShadow: "0 0 15px rgba(255, 255, 255, 0.2)",
+                  },
+                  transition: "all 0.2s ease",
+                }}
               >
-              Add Group
+                Add Group
               </Button>
               <Tooltip
-              title={
-                liveEditMode
-                ? "Changes are automatically saved"
-                : "Toggle to enable automatic saving"
-              }
+                title={
+                  liveEditMode
+                    ? "Changes are automatically saved"
+                    : "Toggle to enable automatic saving"
+                }
               >
-              <FormControlLabel
-                control={
-                <Switch
-                  checked={liveEditMode}
-                  onChange={(e) => setLiveEditMode(e.target.checked)}
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={liveEditMode}
+                      onChange={(e) => setLiveEditMode(e.target.checked)}
+                      sx={{
+                        "& .MuiSwitch-switchBase.Mui-checked": {
+                          color: "white",
+                          "&:hover": {
+                            backgroundColor: alpha("#fff", 0.1),
+                          },
+                        },
+                        "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                          {
+                            backgroundColor: alpha("#fff", 0.5),
+                          },
+                        "& .MuiSwitch-track": {
+                          backgroundColor: alpha("#fff", 0.3),
+                        },
+                        "& .MuiSwitch-thumb": {
+                          boxShadow: "0 0 8px rgba(255, 255, 255, 0.3)",
+                        },
+                      }}
+                    />
+                  }
+                  label={
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: "white",
+                        fontSize: "0.75rem",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Live Edit
+                    </Typography>
+                  }
                   sx={{
-                  "& .MuiSwitch-switchBase.Mui-checked": {
-                    color: "white",
-                    "&:hover": {
-                    backgroundColor: alpha("#fff", 0.1),
-                    },
-                  },
-                  "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                    {
-                    backgroundColor: alpha("#fff", 0.5),
-                    },
-                  "& .MuiSwitch-track": {
-                    backgroundColor: alpha("#fff", 0.3),
-                  },
-                  "& .MuiSwitch-thumb": {
-                    boxShadow: "0 0 8px rgba(255, 255, 255, 0.3)",
-                  },
+                    mr: 0,
+                    borderRadius: 2,
+                    px: 2,
+                    height: 40,
+                    minWidth: 110,
+                    bgcolor: liveEditMode
+                      ? (theme) => alpha(theme.palette.success.main, 0.4)
+                      : (theme) => alpha(theme.palette.common.white, 0.1),
+                    backdropFilter: "blur(8px)",
+                    border: liveEditMode
+                      ? "1px solid rgba(76, 175, 80, 0.5)"
+                      : "1px solid rgba(255, 255, 255, 0.1)",
+                    transition: "all 0.2s ease",
+                    display: "flex",
+                    alignItems: "center",
                   }}
                 />
-                }
-                label={
-                <Typography
-                  variant="body2"
-                  sx={{
-                  color: "white",
-                  fontSize: "0.75rem",
-                  fontWeight: "bold",
-                  }}
-                >
-                  Live Edit
-                </Typography>
-                }
-                sx={{
-                mr: 0,
-                borderRadius: 2,
-                px: 2,
-                height: 40,
-                minWidth: 110,
-                bgcolor: liveEditMode
-                  ? (theme) => alpha(theme.palette.success.main, 0.4)
-                  : (theme) => alpha(theme.palette.common.white, 0.1),
-                backdropFilter: "blur(8px)",
-                border: liveEditMode
-                  ? "1px solid rgba(76, 175, 80, 0.5)"
-                  : "1px solid rgba(255, 255, 255, 0.1)",
-                transition: "all 0.2s ease",
-                display: "flex",
-                alignItems: "center",
-                }}
-              />
               </Tooltip>
               <Button
-              color="inherit"
-              startIcon={<SaveIcon />}
-              onClick={saveMealPlan}
-              disabled={loading}
-              sx={{
-                borderRadius: 2,
-                px: 2,
-                py: 1,
-                bgcolor: (theme) => alpha(theme.palette.common.white, 0.2),
-                backdropFilter: "blur(8px)",
-                border: "1px solid rgba(255, 255, 255, 0.2)",
-                boxShadow: "0 0 10px rgba(255, 255, 255, 0.15)",
-                height: 40,
-                minWidth: 110,
-                "&:hover": {
-                bgcolor: (theme) => alpha(theme.palette.common.white, 0.3),
-                boxShadow: "0 0 20px rgba(255, 255, 255, 0.3)",
-                },
-                "&.Mui-disabled": {
-                bgcolor: (theme) => alpha(theme.palette.common.white, 0.05),
-                },
-                transition: "all 0.2s ease",
-              }}
+                color="inherit"
+                startIcon={<SaveIcon />}
+                onClick={saveMealPlan}
+                disabled={loading}
+                sx={{
+                  borderRadius: 2,
+                  px: 2,
+                  py: 1,
+                  bgcolor: (theme) => alpha(theme.palette.common.white, 0.2),
+                  backdropFilter: "blur(8px)",
+                  border: "1px solid rgba(255, 255, 255, 0.2)",
+                  boxShadow: "0 0 10px rgba(255, 255, 255, 0.15)",
+                  height: 40,
+                  minWidth: 110,
+                  "&:hover": {
+                    bgcolor: (theme) => alpha(theme.palette.common.white, 0.3),
+                    boxShadow: "0 0 20px rgba(255, 255, 255, 0.3)",
+                  },
+                  "&.Mui-disabled": {
+                    bgcolor: (theme) => alpha(theme.palette.common.white, 0.05),
+                  },
+                  transition: "all 0.2s ease",
+                }}
               >
-              {liveEditMode ? "Save & Close" : "Save"}
+                {liveEditMode ? "Save & Close" : "Save"}
               </Button>
             </Box>
           </Toolbar>

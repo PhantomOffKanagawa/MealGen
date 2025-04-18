@@ -61,11 +61,14 @@ const CREATE_INGREDIENT_MUTATION = gql`
 
 // GraphQL mutation to update an existing ingredient
 const UPDATE_INGREDIENT_MUTATION = gql`
-mutation IngredientUpdateOne($filter: FilterUpdateOneIngredientInput, $record: UpdateOneIngredientInput!) {
-  ingredientUpdateOne(filter: $filter, record: $record) {
-    recordId
+  mutation IngredientUpdateOne(
+    $filter: FilterUpdateOneIngredientInput
+    $record: UpdateOneIngredientInput!
+  ) {
+    ingredientUpdateOne(filter: $filter, record: $record) {
+      recordId
+    }
   }
-}
 `;
 
 // GraphQL mutation to delete an ingredient
@@ -102,7 +105,10 @@ export const INGREDIENT_UPDATED = gql`
 
 // Function to fetch all ingredients for a user
 // This function takes a GraphQL client and a user object as parameters
-export const getAllIngredients = async (graphqlClient: ApolloClient<NormalizedCacheObject>, user: any) => {
+export const getAllIngredients = async (
+  graphqlClient: ApolloClient<NormalizedCacheObject>,
+  user: any,
+) => {
   try {
     // Fetch all ingredients for the user using the GraphQL client
     // The query is executed with the user's ID as a filter
@@ -110,9 +116,9 @@ export const getAllIngredients = async (graphqlClient: ApolloClient<NormalizedCa
     const response = await graphqlClient.query({
       query: GET_ALL_INGREDIENTS_QUERY,
       variables: {
-      filter: { userId: user?._id || '' },
+        filter: { userId: user?._id || "" },
       },
-      fetchPolicy: 'no-cache',
+      fetchPolicy: "no-cache",
     });
     // Return the list of ingredients for the user
     return response.data.ingredientByUserId;
@@ -127,18 +133,16 @@ export const getAllIngredients = async (graphqlClient: ApolloClient<NormalizedCa
 // This function takes a GraphQL client and an ingredient object as parameters
 export const createIngredient = async (
   graphqlClient: ApolloClient<NormalizedCacheObject>,
-  ingredient: Omit<Ingredient, "_id">
+  ingredient: Omit<Ingredient, "_id">,
 ) => {
   try {
     // Send ingredient data in creation request
-    const response = await graphqlClient.mutate(
-      {
-        mutation: CREATE_INGREDIENT_MUTATION,
-        variables: {
-          record: ingredient,
-        },
-      }
-    );
+    const response = await graphqlClient.mutate({
+      mutation: CREATE_INGREDIENT_MUTATION,
+      variables: {
+        record: ingredient,
+      },
+    });
     // Return the created ingredient record
     return response.data.ingredientCreateOne.record;
   } catch (error) {
@@ -154,19 +158,19 @@ export const updateIngredient = async (
   graphqlClient: ApolloClient<NormalizedCacheObject>,
   id: string,
   userId: string,
-  ingredient: Partial<Ingredient>
+  ingredient: Partial<Ingredient>,
 ) => {
   try {
     // // Create a clean input object for the mutation
     // const cleanInput: Record<string, any> = {};
-    
+
     // // Copy relevant fields, omitting __typename and _id
     // if ('userId' in ingredient && ingredient.userId) cleanInput.userId = ingredient.userId;
     // if ('name' in ingredient && ingredient.name) cleanInput.name = ingredient.name;
     // if ('quantity' in ingredient) cleanInput.quantity = ingredient.quantity;
     // if ('unit' in ingredient && ingredient.unit) cleanInput.unit = ingredient.unit;
     // if ('price' in ingredient) cleanInput.price = ingredient.price;
-    
+
     // // Handle macros separately to remove __typename
     // if (ingredient.macros) {
     //   cleanInput.macros = {
@@ -177,10 +181,10 @@ export const updateIngredient = async (
     //   };
     // }
 
-    const {_id, ...cleanIngredient}: any = ingredient; // Destructure to omit _id
+    const { _id, ...cleanIngredient }: any = ingredient; // Destructure to omit _id
     // Remove __typename from macros if it exists
     delete cleanIngredient.__typename;
-    delete cleanIngredient.macros?.__typename
+    delete cleanIngredient.macros?.__typename;
 
     const response = await graphqlClient.mutate({
       mutation: UPDATE_INGREDIENT_MUTATION,
@@ -206,7 +210,7 @@ export const updateIngredient = async (
 export const deleteIngredient = async (
   graphqlClient: ApolloClient<NormalizedCacheObject>,
   id: string,
-  userId: string
+  userId: string,
 ) => {
   try {
     // Send delete request with the ingredient ID and user ID
@@ -216,7 +220,7 @@ export const deleteIngredient = async (
         filter: {
           _id: id,
           userId: userId,
-        }
+        },
       },
     });
     // Return the deleted ingredient record ID

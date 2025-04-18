@@ -37,7 +37,7 @@ import { useSubscription } from "@apollo/client";
 const ClientSnackbar = dynamic(() => Promise.resolve(Snackbar), { ssr: false });
 const IngredientEditDialog = dynamic(
   () => import("@/components/ingredients/IngredientEditDialog"),
-  { ssr: false }
+  { ssr: false },
 );
 
 const defaultIngredient: Ingredient = {
@@ -64,7 +64,8 @@ const IngredientsPage: React.FC = () => {
 
   // State variables for tracking user data
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
-  const [currentIngredient, setCurrentIngredient] = useState<Ingredient>(defaultIngredient);
+  const [currentIngredient, setCurrentIngredient] =
+    useState<Ingredient>(defaultIngredient);
 
   // State variables for managing loading, error, and dialog states
   const [pageLoading, setPageLoading] = useState(true);
@@ -85,7 +86,7 @@ const IngredientsPage: React.FC = () => {
   useEffect(() => {
     setIsMounted(true);
   }, []);
-  
+
   // Fetch ingredients when the component mounts or when loading state changes
   useEffect(() => {
     if (!loading && isMounted) {
@@ -109,7 +110,10 @@ const IngredientsPage: React.FC = () => {
       // Ensure ingredientUpdated is defined and update wasn't from this window
       if (ingredientUpdated && ingredientUpdated.sourceClientId !== CLIENT_ID) {
         // Log the received update for debugging
-        console.log("Received ingredient update from server:", ingredientUpdated);
+        console.log(
+          "Received ingredient update from server:",
+          ingredientUpdated,
+        );
 
         // Fetch the latest ingredients data after receiving an update
         fetchIngredients();
@@ -185,7 +189,7 @@ const IngredientsPage: React.FC = () => {
     const { name, value } = e.target;
 
     // Update the currentIngredient state using the functional update form
-    setCurrentIngredient(prevIngredient => {
+    setCurrentIngredient((prevIngredient) => {
       // If the input name starts with "macros.", update the nested macros object
       if (name.startsWith("macros.")) {
         // Extract the macro property name (e.g., "calories", "protein")
@@ -199,7 +203,7 @@ const IngredientsPage: React.FC = () => {
             [macroProperty]: parseFloat(value) || 0,
           },
         };
-      // If the input name is "quantity" or "price", update the corresponding property
+        // If the input name is "quantity" or "price", update the corresponding property
       } else if (name === "quantity" || name === "price") {
         // Return the new state object with the updated numeric property
         return {
@@ -207,7 +211,7 @@ const IngredientsPage: React.FC = () => {
           // Parse the value to a float or default to 0
           [name]: parseFloat(value) || 0,
         };
-      // Otherwise, update a top-level property (e.g., "name", "unit")
+        // Otherwise, update a top-level property (e.g., "name", "unit")
       } else {
         // Return the new state object with the updated string property
         return {
@@ -222,7 +226,6 @@ const IngredientsPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    
     try {
       // Loading while submitting the form
       setPageLoading(true);
@@ -233,7 +236,7 @@ const IngredientsPage: React.FC = () => {
           graphqlClient,
           currentIngredient._id,
           user?._id || "",
-          currentIngredient
+          currentIngredient,
         );
         // Show a success snackbar notification
         setSnackbar({
@@ -285,7 +288,7 @@ const IngredientsPage: React.FC = () => {
       await deleteIngredient(
         graphqlClient,
         currentIngredient._id,
-        user?._id || ""
+        user?._id || "",
       );
       // Show a success snackbar notification
       setSnackbar({
@@ -380,7 +383,7 @@ const IngredientsPage: React.FC = () => {
         sx={{
           background: `linear-gradient(to right, ${alpha(
             theme.palette.success.dark,
-            0.9
+            0.9,
           )}, ${alpha(theme.palette.success.main, 0.8)})`,
           color: "white",
           py: { xs: 6, md: 8 },
@@ -400,7 +403,7 @@ const IngredientsPage: React.FC = () => {
                 sx={{
                   textShadow: `0 2px 10px ${alpha(
                     theme.palette.common.black,
-                    0.3
+                    0.3,
                   )}`,
                 }}
               >
@@ -426,8 +429,9 @@ const IngredientsPage: React.FC = () => {
             color="success"
             onAddNew={() => handleOpenForm()}
             addButtonText="Add New Ingredient"
-          />          {loading || pageLoading && !openForm && !openDeleteDialog ? (
-            <LoadingStateDisplay 
+          />{" "}
+          {loading || (pageLoading && !openForm && !openDeleteDialog) ? (
+            <LoadingStateDisplay
               color="success"
               text="Loading ingredients..."
               icon={<KitchenIcon sx={{ fontSize: 40 }} />}
@@ -443,7 +447,7 @@ const IngredientsPage: React.FC = () => {
                 my: 4,
                 boxShadow: `0 8px 24px ${alpha(
                   theme.palette.success.main,
-                  0.15
+                  0.15,
                 )}`,
                 borderRadius: 2,
                 border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
@@ -476,7 +480,6 @@ const IngredientsPage: React.FC = () => {
               getRowId={(row) => row._id}
             />
           )}
-
           {/* Create/Edit Ingredient Form Dialog */}
           <IngredientEditDialog
             open={openForm}
@@ -487,7 +490,6 @@ const IngredientsPage: React.FC = () => {
             isEditing={isEditing}
             loading={loading && pageLoading}
           />
-
           {/* Delete Confirmation Dialog */}
           <DeleteConfirmationDialog
             open={openDeleteDialog}
@@ -497,7 +499,6 @@ const IngredientsPage: React.FC = () => {
             message={`Are you sure you want to delete the ingredient "${currentIngredient.name}"? This action cannot be undone.`}
             loading={loading && pageLoading}
           />
-
           {/* Snackbar for notifications */}
           <ClientSnackbar
             open={snackbar.open}

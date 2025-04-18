@@ -52,7 +52,7 @@ import LoadingStateDisplay from "@/components/LoadingStateDisplay";
 const ClientSnackbar = dynamic(() => Promise.resolve(Snackbar), { ssr: false });
 const MealPlanEditDialog = dynamic(
   () => import("@/components/meal-plans/MealPlanEditDialog"),
-  { ssr: false }
+  { ssr: false },
 );
 
 /** Default meal plan structure for creating new plans */
@@ -130,7 +130,7 @@ const MealPlansPage: React.FC = () => {
         // Log the received update for debugging
         console.log(
           "Received ingredient update from server:",
-          ingredientUpdated
+          ingredientUpdated,
         );
 
         // Fetch the latest ingredients data after receiving an update
@@ -199,8 +199,11 @@ const MealPlansPage: React.FC = () => {
 
         // Fetch the latest meals data after receiving an update
         fetchData();
-        
-        if (mealPlanUpdated && mealPlanUpdated.mealPlanUpdated._id == currentMealPlan._id) {
+
+        if (
+          mealPlanUpdated &&
+          mealPlanUpdated.mealPlanUpdated._id == currentMealPlan._id
+        ) {
           const updatedMealPlan = mealPlanUpdated.mealPlanUpdated;
           console.log("Updated meal plan:", updatedMealPlan);
           setCurrentMealPlan(updatedMealPlan);
@@ -403,7 +406,7 @@ const MealPlansPage: React.FC = () => {
           graphqlClient,
           currentMealPlan._id,
           user?._id || "",
-          currentMealPlan
+          currentMealPlan,
         );
         setSnackbar({
           open: true,
@@ -429,7 +432,7 @@ const MealPlansPage: React.FC = () => {
       if (close) {
         handleCloseForm();
       }
-        fetchData(); // Refresh the data
+      fetchData(); // Refresh the data
     } catch (err) {
       setSnackbar({
         open: true,
@@ -543,7 +546,7 @@ const MealPlansPage: React.FC = () => {
         sx={{
           background: `linear-gradient(to right, ${alpha(
             theme.palette.primary.dark,
-            0.9
+            0.9,
           )}, ${alpha(theme.palette.primary.main, 0.8)})`,
           color: "white",
           py: { xs: 6, md: 8 },
@@ -563,7 +566,7 @@ const MealPlansPage: React.FC = () => {
                 sx={{
                   textShadow: `0 2px 10px ${alpha(
                     theme.palette.common.black,
-                    0.3
+                    0.3,
                   )}`,
                 }}
               >
@@ -590,8 +593,8 @@ const MealPlansPage: React.FC = () => {
             addButtonText="Create New Meal Plan"
           />
 
-          {loading || pageLoading && !openForm && !openDeleteDialog ? (
-            <LoadingStateDisplay 
+          {loading || (pageLoading && !openForm && !openDeleteDialog) ? (
+            <LoadingStateDisplay
               color="primary"
               text="Loading meal plans..."
               icon={<RestaurantMenuIcon sx={{ fontSize: 40 }} />}
@@ -607,7 +610,7 @@ const MealPlansPage: React.FC = () => {
                 my: 4,
                 boxShadow: `0 8px 24px ${alpha(
                   theme.palette.primary.main,
-                  0.15
+                  0.15,
                 )}`,
                 borderRadius: 2,
                 border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,

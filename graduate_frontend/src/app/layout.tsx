@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
-import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
+import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import Header from "@/components/Header";
 import AuthGuard from "@/components/AuthGuard";
 import { ThemeProvider } from "@mui/material/styles";
@@ -20,28 +20,28 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "MealGen - Smart Meal Planning",
-  description: "Plan your meals, track nutrition, and manage food costs effectively",
+  description:
+    "Plan your meals, track nutrition, and manage food costs effectively",
 };
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
-}>) {  return (
+}>) {
+  return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
           <AppRouterCacheProvider>
-          <ThemeProvider theme={theme}>
-            <Header />
-            <main className="min-h-screen">
-              {/* AuthGuard will handle loading states and redirects based on auth status */}
-              <AuthGuard>
-                {children}
-              </AuthGuard>
-            </main>
+            <ThemeProvider theme={theme}>
+              <Header />
+              <main className="min-h-screen">
+                {/* AuthGuard will handle loading states and redirects based on auth status */}
+                <AuthGuard>{children}</AuthGuard>
+              </main>
             </ThemeProvider>
           </AppRouterCacheProvider>
         </AuthProvider>

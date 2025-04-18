@@ -1,17 +1,26 @@
 /**
  * MealPlanTable Component
- * 
+ *
  * Displays a table of meal plans with their nutritional information and provides
  * actions to edit or delete them.
  */
-import React from 'react';
-import { 
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
-  Paper, IconButton, Alert, Box, CircularProgress
-} from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { MealPlan } from '../../services/mealPlanService';
+import React from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  IconButton,
+  Alert,
+  Box,
+  CircularProgress,
+} from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import { MealPlan } from "../../services/mealPlanService";
 
 interface MealPlanTableProps {
   loading: boolean;
@@ -26,18 +35,22 @@ const MealPlanTable: React.FC<MealPlanTableProps> = ({
   error,
   mealPlans,
   onEdit,
-  onDelete
+  onDelete,
 }) => {
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
         <CircularProgress />
       </Box>
     );
   }
 
   if (error) {
-    return <Alert severity="error" sx={{ my: 2 }}>{error}</Alert>;
+    return (
+      <Alert severity="error" sx={{ my: 2 }}>
+        {error}
+      </Alert>
+    );
   }
 
   if (mealPlans.length === 0) {
@@ -74,15 +87,15 @@ const MealPlanTable: React.FC<MealPlanTableProps> = ({
               <TableCell>{mealPlan.macros.fat.toFixed(1)}</TableCell>
               <TableCell>${mealPlan.price.toFixed(2)}</TableCell>
               <TableCell>
-                <IconButton 
-                  color="primary" 
+                <IconButton
+                  color="primary"
                   onClick={() => onEdit(mealPlan)}
                   aria-label="edit"
                 >
                   <EditIcon />
                 </IconButton>
-                <IconButton 
-                  color="error" 
+                <IconButton
+                  color="error"
                   onClick={() => onDelete(mealPlan)}
                   aria-label="delete"
                 >

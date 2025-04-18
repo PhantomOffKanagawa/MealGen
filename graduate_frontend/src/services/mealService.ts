@@ -138,7 +138,7 @@ export const getAllMeals = async (graphqlClient: any, user: any) => {
 // This function takes a GraphQL client and an meal object as parameters
 export const createMeal = async (
   graphqlClient: any,
-  meal: Omit<Meal, "_id">
+  meal: Omit<Meal, "_id">,
 ) => {
   try {
     // Send meal data in creation request
@@ -163,7 +163,7 @@ export const updateMeal = async (
   graphqlClient: any,
   id: string,
   userId: string,
-  meal: Partial<Meal>
+  meal: Partial<Meal>,
 ) => {
   try {
     // Ensure the meal object contains the necessary fields for the update
@@ -171,7 +171,7 @@ export const updateMeal = async (
     // Remove __typename from the meal object if it exists
     delete cleanMeal?.__typename;
     delete cleanMeal?.macros?.__typename;
-    
+
     // Clean __typename from each ingredient in the ingredients array
     if (cleanMeal.ingredients && Array.isArray(cleanMeal.ingredients)) {
       cleanMeal.ingredients = cleanMeal.ingredients.map((ingredient: any) => {
@@ -200,13 +200,17 @@ export const updateMeal = async (
 
 // Function to delete a meal
 // This function takes a GraphQL client and meal ID as parameters
-export const deleteMeal = async (graphqlClient: any, id: string, userId: string) => {
+export const deleteMeal = async (
+  graphqlClient: any,
+  id: string,
+  userId: string,
+) => {
   try {
     // Send delete request with the meal ID
     const response = await graphqlClient.mutate({
       mutation: DELETE_MEAL_MUTATION,
       variables: {
-        filter: { _id: id, userId: userId},
+        filter: { _id: id, userId: userId },
       },
     });
     // Return the ID of the deleted meal

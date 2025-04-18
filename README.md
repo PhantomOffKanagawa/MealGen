@@ -150,9 +150,10 @@ graduate_backend/
 ## Now To-Do
 - Test Setup-and-Installation.md information
 - Add yarn prettier to package.json
-- Add wiki pages
+- ~~Add wiki pages~~
+   - Finish all wiki pages
 - Update README.md with up to date info
-- Switch .env files with dummy data and reissue api keys
+- ~~Switch .env files with dummy data and reissue api keys~~
 
 ## Future To-Do
 

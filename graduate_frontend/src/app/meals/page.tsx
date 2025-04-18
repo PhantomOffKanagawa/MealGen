@@ -43,7 +43,7 @@ import LoadingStateDisplay from "@/components/LoadingStateDisplay";
 const ClientSnackbar = dynamic(() => Promise.resolve(Snackbar), { ssr: false });
 const MealEditDialog = dynamic(
   () => import("@/components/meals/MealEditDialog"),
-  { ssr: false }
+  { ssr: false },
 );
 
 const defaultMeal: Meal = {
@@ -118,7 +118,7 @@ const MealsPage: React.FC = () => {
         // Log the received update for debugging
         console.log(
           "Received ingredient update from server:",
-          ingredientUpdated
+          ingredientUpdated,
         );
 
         // Fetch the latest ingredients data after receiving an update
@@ -284,7 +284,7 @@ const MealsPage: React.FC = () => {
     // Check if ingredient already exists in meal
     const existingIngredientIndex = currentMeal.ingredients.findIndex(
       // Find the index of the ingredient with the same ID
-      (item) => item.ingredientId === ingredientId
+      (item) => item.ingredientId === ingredientId,
     );
 
     // Initialize updatedIngredients variable
@@ -317,7 +317,7 @@ const MealsPage: React.FC = () => {
   const handleRemoveIngredient = (ingredientId: string) => {
     // Remove the ingredient with the specified ID from the meal
     const updatedIngredients = currentMeal.ingredients.filter(
-      (item) => item.ingredientId !== ingredientId
+      (item) => item.ingredientId !== ingredientId,
     );
 
     // Calculate macros and price based on ingredients
@@ -339,7 +339,7 @@ const MealsPage: React.FC = () => {
     mealIngredients.forEach((mealIngredient) => {
       // Find the corresponding ingredient in the ingredients list
       const ingredient = ingredients.find(
-        (i) => i._id === mealIngredient.ingredientId
+        (i) => i._id === mealIngredient.ingredientId,
       );
 
       // If the ingredient is found, calculate its contribution to the meal's nutrition
@@ -377,7 +377,7 @@ const MealsPage: React.FC = () => {
           graphqlClient,
           currentMeal._id,
           user?._id || "",
-          currentMeal
+          currentMeal,
         );
         setSnackbar({
           open: true,
@@ -506,7 +506,7 @@ const MealsPage: React.FC = () => {
         sx={{
           background: `linear-gradient(to right, ${alpha(
             theme.palette.secondary.dark,
-            0.9
+            0.9,
           )}, ${alpha(theme.palette.secondary.main, 0.8)})`,
           color: "white",
           py: { xs: 6, md: 8 },
@@ -526,7 +526,7 @@ const MealsPage: React.FC = () => {
                 sx={{
                   textShadow: `0 2px 10px ${alpha(
                     theme.palette.common.black,
-                    0.3
+                    0.3,
                   )}`,
                 }}
               >
@@ -554,8 +554,8 @@ const MealsPage: React.FC = () => {
             addButtonText="Create New Meal"
           />
 
-          {loading || pageLoading && !openForm && !openDeleteDialog ? (
-            <LoadingStateDisplay 
+          {loading || (pageLoading && !openForm && !openDeleteDialog) ? (
+            <LoadingStateDisplay
               color="secondary"
               text="Loading meals..."
               icon={<FastfoodIcon sx={{ fontSize: 40 }} />}
@@ -571,7 +571,7 @@ const MealsPage: React.FC = () => {
                 my: 4,
                 boxShadow: `0 8px 24px ${alpha(
                   theme.palette.secondary.main,
-                  0.15
+                  0.15,
                 )}`,
                 borderRadius: 2,
                 border: `1px solid ${alpha(theme.palette.secondary.main, 0.2)}`,

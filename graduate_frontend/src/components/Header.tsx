@@ -44,7 +44,7 @@ export default function Header() {
       sx={{
         background: `linear-gradient(to bottom, ${alpha(
           theme.palette.background.paper,
-          0.95
+          0.95,
         )}, ${alpha(theme.palette.background.paper, 0.9)})`,
         backdropFilter: "blur(10px)",
         borderBottom: `1px solid ${alpha(getRouteColor(), 0.3)}`,
@@ -57,7 +57,7 @@ export default function Header() {
           borderBottom: "1px solid transparent",
           background: `linear-gradient(90deg, ${alpha(
             getRouteColor(),
-            0
+            0,
           )}, ${alpha(getRouteColor(), 0.6)}, ${alpha(getRouteColor(), 0)})`,
           WebkitMask:
             "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
@@ -186,7 +186,7 @@ export default function Header() {
                         backgroundColor: theme.palette.success.main,
                         boxShadow: `0 0 10px ${alpha(
                           theme.palette.success.main,
-                          0.8
+                          0.8,
                         )}`,
                       },
                     },
@@ -232,7 +232,7 @@ export default function Header() {
                         backgroundColor: theme.palette.secondary.main,
                         boxShadow: `0 0 10px ${alpha(
                           theme.palette.secondary.main,
-                          0.8
+                          0.8,
                         )}`,
                       },
                     },
@@ -332,7 +332,7 @@ export default function Header() {
                     borderRadius: 6,
                     backgroundColor: alpha(
                       theme.palette.background.default,
-                      0.4
+                      0.4,
                     ),
                     backdropFilter: "blur(10px)",
                     border: `1px solid ${alpha(getRouteColor(), 0.2)}`,
@@ -348,7 +348,7 @@ export default function Header() {
                       boxShadow: `0 0 10px ${alpha(getRouteColor(), 0.5)}`,
                       border: `2px solid ${alpha(
                         theme.palette.common.white,
-                        0.8
+                        0.8,
                       )}`,
                     }}
                   >
@@ -377,7 +377,7 @@ export default function Header() {
                       borderRadius: 4,
                       border: `1px solid ${alpha(
                         theme.palette.error.main,
-                        0.3
+                        0.3,
                       )}`,
                       color: theme.palette.error.main,
                       transition: "all 0.3s ease",
@@ -387,7 +387,7 @@ export default function Header() {
                         borderColor: theme.palette.error.main,
                         boxShadow: `0 0 10px ${alpha(
                           theme.palette.error.main,
-                          0.4
+                          0.4,
                         )}`,
                       },
                     }}
@@ -406,7 +406,7 @@ export default function Header() {
                     borderRadius: 6,
                     backgroundColor: alpha(
                       theme.palette.background.default,
-                      0.4
+                      0.4,
                     ),
                     backdropFilter: "blur(10px)",
                     border: `1px solid ${alpha(getRouteColor(), 0.2)}`,
@@ -422,7 +422,7 @@ export default function Header() {
                       boxShadow: `0 0 10px ${alpha(getRouteColor(), 0.5)}`,
                       border: `2px solid ${alpha(
                         theme.palette.common.white,
-                        0.8
+                        0.8,
                       )}`,
                     }}
                   ></Avatar>

@@ -10,7 +10,7 @@ export interface MacroNutrients {
 }
 
 export interface MealPlanItem {
-  type: 'ingredient' | 'meal';
+  type: "ingredient" | "meal";
   itemId: string;
   quantity: number;
   group: string;
@@ -79,7 +79,7 @@ const CREATE_MEAL_PLAN_MUTATION = gql`
 // GraphQL mutation to update an existing meal plan
 const UPDATE_MEAL_PLAN_MUTATION = gql`
   mutation MealPlanUpdateOne(
-    $filter: FilterUpdateOneMealPlanInput,
+    $filter: FilterUpdateOneMealPlanInput
     $record: UpdateOneMealPlanInput!
   ) {
     mealPlanUpdateOne(filter: $filter, record: $record) {
@@ -130,9 +130,9 @@ export const getAllMealPlans = async (graphqlClient: any, user: any) => {
     const response = await graphqlClient.query({
       query: GET_ALL_MEAL_PLANS_QUERY,
       variables: {
-        filter: { userId: user?._id || '' },
+        filter: { userId: user?._id || "" },
       },
-      fetchPolicy: 'no-cache',
+      fetchPolicy: "no-cache",
     });
     return response.data.mealPlanMany;
   } catch (error) {
@@ -143,7 +143,7 @@ export const getAllMealPlans = async (graphqlClient: any, user: any) => {
 
 export const createMealPlan = async (
   graphqlClient: any,
-  mealPlan: Omit<MealPlan, "_id">
+  mealPlan: Omit<MealPlan, "_id">,
 ) => {
   try {
     const response = await graphqlClient.mutate({
@@ -163,7 +163,7 @@ export const updateMealPlan = async (
   graphqlClient: any,
   id: string,
   userId: string,
-  mealPlan: Partial<MealPlan>
+  mealPlan: Partial<MealPlan>,
 ) => {
   try {
     // Ensure the mealPlan object contains the necessary fields for the update
@@ -173,7 +173,7 @@ export const updateMealPlan = async (
       variables: {
         filter: { _id: id, userId },
         record: newMealPlan,
-      }
+      },
     });
     return response.data.mealPlanUpdateOne.recordId;
   } catch (error) {
@@ -185,7 +185,7 @@ export const updateMealPlan = async (
 export const deleteMealPlan = async (
   graphqlClient: any,
   id: string,
-  userId: string
+  userId: string,
 ) => {
   try {
     const response = await graphqlClient.mutate({
@@ -193,9 +193,9 @@ export const deleteMealPlan = async (
       variables: {
         filter: {
           _id: id,
-          userId
-        }
-      }
+          userId,
+        },
+      },
     });
     return response.data.mealPlanRemoveOne.recordId;
   } catch (error) {

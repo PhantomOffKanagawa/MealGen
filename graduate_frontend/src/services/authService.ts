@@ -75,7 +75,7 @@ const ME_QUERY = gql`
  */
 export const login = async (
   email: string,
-  password: string
+  password: string,
 ): Promise<AuthResponse> => {
   try {
     const result = await graphqlClient.mutate<{ login: AuthResponse }>({
@@ -104,7 +104,7 @@ export const register = async (
   name: string,
   email: string,
   password: string,
-  age?: number
+  age?: number,
 ): Promise<AuthResponse> => {
   try {
     const result = await graphqlClient.mutate<{ register: AuthResponse }>({

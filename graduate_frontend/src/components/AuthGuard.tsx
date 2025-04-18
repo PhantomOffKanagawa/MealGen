@@ -41,10 +41,9 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
     //   return;
     // }
 
-    
     // For other routes, wait until loading is complete
     if (!loading) {
-        console.log("User:", user);
+      console.log("User:", user);
       if (user) {
         // User is successfully authenticated
         if (pathname === "/auth") {
@@ -54,23 +53,34 @@ const AuthGuard = ({ children }: AuthGuardProps) => {
       } else {
         // User is not authenticated (either no token or invalid token)
         if (pathname !== "/auth" && pathname !== "/") {
-            setNeedsLogin(true);
+          setNeedsLogin(true);
         }
         setShowLoading(false); // Hide loading state after initial check
       }
     }
-
   }, [user, loading, pathname, router]);
 
-    const routeColorTranslation: { [key: string]: "primary" | "secondary" | "success" | "error" | "info" | "warning" } = {
-        '/': "primary",
-        '/ingredients': "success",
-        '/meals': "secondary",
-        '/meal-plans': "primary",
-        "/auth": "primary",
-    };
+  const routeColorTranslation: {
+    [key: string]:
+      | "primary"
+      | "secondary"
+      | "success"
+      | "error"
+      | "info"
+      | "warning";
+  } = {
+    "/": "primary",
+    "/ingredients": "success",
+    "/meals": "secondary",
+    "/meal-plans": "primary",
+    "/auth": "primary",
+  };
 
-  if (!needsLogin && (showLoading && loading) || (!hasToken && showLoading && !user) || (((!user && loading && hasToken) || user) && pathname === "/auth")) {
+  if (
+    (!needsLogin && showLoading && loading) ||
+    (!hasToken && showLoading && !user) ||
+    (((!user && loading && hasToken) || user) && pathname === "/auth")
+  ) {
     return (
       <Box
         sx={{

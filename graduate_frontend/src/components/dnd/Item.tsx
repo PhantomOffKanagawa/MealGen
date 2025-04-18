@@ -74,7 +74,7 @@ export function Item({
 
   // Show quantity controls only for items in meal plan columns, not in stores
   const showQuantityControls = !["ingredients-store", "meals-store"].includes(
-    column
+    column,
   );
 
   const isIngredient = type === "ingredient";
@@ -100,7 +100,7 @@ export function Item({
         debounceTimerRef.current = null;
       }, 300); // 300ms debounce
     },
-    [id, onQuantityChange]
+    [id, onQuantityChange],
   );
 
   // Handle quantity changes
@@ -115,7 +115,7 @@ export function Item({
       // Notify parent with debounce
       debouncedNotifyChange(newQuantity);
     },
-    [debouncedNotifyChange]
+    [debouncedNotifyChange],
   );
   return (
     <Card
@@ -130,13 +130,13 @@ export function Item({
               isIngredient
                 ? theme.palette.success.main
                 : theme.palette.secondary.main,
-              0.5
+              0.5,
             )}`
           : `0 2px 8px ${alpha(
               isIngredient
                 ? theme.palette.success.main
                 : theme.palette.secondary.main,
-              0.2
+              0.2,
             )}`,
         cursor: "grab",
         backgroundColor: alpha(theme.palette.background.paper, 0.8),
@@ -162,7 +162,7 @@ export function Item({
             isIngredient
               ? theme.palette.success.main
               : theme.palette.secondary.main,
-            0.4
+            0.4,
           )}`,
           pointerEvents: "none",
         },
@@ -171,7 +171,7 @@ export function Item({
             isIngredient
               ? theme.palette.success.main
               : theme.palette.secondary.main,
-            0.4
+            0.4,
           )}`,
           transform: "translateY(-2px)",
           "&::after": {
@@ -206,7 +206,7 @@ export function Item({
                     isIngredient
                       ? theme.palette.success.main
                       : theme.palette.secondary.main,
-                    0.3
+                    0.3,
                   )}`,
                   mr: 1.5,
                 }}
@@ -263,7 +263,7 @@ export function Item({
                     isIngredient
                       ? theme.palette.success.main
                       : theme.palette.secondary.main,
-                    0.2
+                    0.2,
                   )}`,
                   borderRadius: 1,
                   p: 0.5,
@@ -271,7 +271,7 @@ export function Item({
                     isIngredient
                       ? theme.palette.success.main
                       : theme.palette.secondary.main,
-                    0.05
+                    0.05,
                   ),
                 }}
               >
@@ -392,7 +392,7 @@ export function Item({
                   isIngredient
                     ? theme.palette.success.main
                     : theme.palette.secondary.main,
-                  0.2
+                  0.2,
                 )}`,
                 borderRadius: 1,
                 p: 0.5,
@@ -403,7 +403,7 @@ export function Item({
                   isIngredient
                     ? theme.palette.success.main
                     : theme.palette.secondary.main,
-                  0.05
+                  0.05,
                 ),
               }}
             >
@@ -548,13 +548,13 @@ export function Item({
                     isIngredient
                       ? theme.palette.success.main
                       : theme.palette.secondary.main,
-                    0.5
+                    0.5,
                   )}`,
                   boxShadow: `0 0 5px ${alpha(
                     isIngredient
                       ? theme.palette.success.main
                       : theme.palette.secondary.main,
-                    0.2
+                    0.2,
                   )}`,
                   color: isIngredient
                     ? theme.palette.success.main
@@ -568,7 +568,7 @@ export function Item({
                       isIngredient
                         ? theme.palette.success.main
                         : theme.palette.secondary.main,
-                      0.4
+                      0.4,
                     )}`,
                   },
                   "&:disabled": {
@@ -608,13 +608,13 @@ export function Item({
                     isIngredient
                       ? theme.palette.success.main
                       : theme.palette.secondary.main,
-                    0.5
+                    0.5,
                   )}`,
                   boxShadow: `0 0 5px ${alpha(
                     isIngredient
                       ? theme.palette.success.main
                       : theme.palette.secondary.main,
-                    0.2
+                    0.2,
                   )}`,
                   "& .MuiOutlinedInput-root": {
                     height: "24px",
@@ -624,7 +624,7 @@ export function Item({
                         isIngredient
                           ? theme.palette.success.main
                           : theme.palette.secondary.main,
-                        0.4
+                        0.4,
                       )}`,
                     },
                   },
@@ -645,13 +645,13 @@ export function Item({
                     isIngredient
                       ? theme.palette.success.main
                       : theme.palette.secondary.main,
-                    0.5
+                    0.5,
                   )}`,
                   boxShadow: `0 0 5px ${alpha(
                     isIngredient
                       ? theme.palette.success.main
                       : theme.palette.secondary.main,
-                    0.2
+                    0.2,
                   )}`,
                   color: isIngredient
                     ? theme.palette.success.main
@@ -665,7 +665,7 @@ export function Item({
                       isIngredient
                         ? theme.palette.success.main
                         : theme.palette.secondary.main,
-                      0.4
+                      0.4,
                     )}`,
                   },
                 }}

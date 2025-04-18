@@ -92,7 +92,7 @@ const IngredientEditDialog: React.FC<IngredientEditDialogProps> = ({
                 InputProps={{
                   sx: {
                     borderRadius: 1,
-                        color: theme.palette.success.main,
+                    color: theme.palette.success.main,
                   },
                 }}
               />
@@ -111,7 +111,7 @@ const IngredientEditDialog: React.FC<IngredientEditDialogProps> = ({
                   min: 0,
                   sx: {
                     borderRadius: 1,
-                        color: theme.palette.success.main,
+                    color: theme.palette.success.main,
                   },
                   step: "any",
                 }}
@@ -130,7 +130,7 @@ const IngredientEditDialog: React.FC<IngredientEditDialogProps> = ({
                 InputProps={{
                   sx: {
                     borderRadius: 1,
-                        color: theme.palette.success.main,
+                    color: theme.palette.success.main,
                   },
                 }}
               />
@@ -172,8 +172,10 @@ const IngredientEditDialog: React.FC<IngredientEditDialogProps> = ({
                       variant="outlined"
                       color="success"
                       InputProps={{
-                        sx: { borderRadius: 1,
-                        color: theme.palette.success.main },
+                        sx: {
+                          borderRadius: 1,
+                          color: theme.palette.success.main,
+                        },
                       }}
                       inputProps={{ min: 0, step: "any" }}
                     />
@@ -190,8 +192,10 @@ const IngredientEditDialog: React.FC<IngredientEditDialogProps> = ({
                       variant="outlined"
                       color="success"
                       InputProps={{
-                        sx: { borderRadius: 1,
-                        color: theme.palette.success.main },
+                        sx: {
+                          borderRadius: 1,
+                          color: theme.palette.success.main,
+                        },
                       }}
                       inputProps={{ min: 0, step: "any" }}
                     />
@@ -208,8 +212,10 @@ const IngredientEditDialog: React.FC<IngredientEditDialogProps> = ({
                       variant="outlined"
                       color="success"
                       InputProps={{
-                        sx: { borderRadius: 1,
-                        color: theme.palette.success.main },
+                        sx: {
+                          borderRadius: 1,
+                          color: theme.palette.success.main,
+                        },
                       }}
                       inputProps={{ min: 0, step: "any" }}
                     />
@@ -226,8 +232,10 @@ const IngredientEditDialog: React.FC<IngredientEditDialogProps> = ({
                       variant="outlined"
                       color="success"
                       InputProps={{
-                        sx: { borderRadius: 1,
-                        color: theme.palette.success.main },
+                        sx: {
+                          borderRadius: 1,
+                          color: theme.palette.success.main,
+                        },
                       }}
                       inputProps={{ min: 0, step: "any" }}
                     />
@@ -246,8 +254,7 @@ const IngredientEditDialog: React.FC<IngredientEditDialogProps> = ({
                 variant="outlined"
                 color="success"
                 InputProps={{
-                  sx: { borderRadius: 1,
-                        color: theme.palette.success.main },
+                  sx: { borderRadius: 1, color: theme.palette.success.main },
                 }}
                 inputProps={{ min: 0, step: "any" }}
               />

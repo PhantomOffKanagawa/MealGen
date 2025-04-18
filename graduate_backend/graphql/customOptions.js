@@ -20,7 +20,7 @@ const wrapMutationAndPublish = (resolver, eventName) => {
       // If the current user doesn't match any relevant ID, deny access
       if (!isOwner) {
         throw new Error(
-          "Unauthorized access: You can only access or modify your own data."
+          "Unauthorized access: You can only access or modify your own data.",
         );
       }
     }
@@ -36,19 +36,19 @@ const wrapMutationAndPublish = (resolver, eventName) => {
     // After successful mutation, publish the event
     // Ensure payload and record exist, and userId is present for topic targeting
     if (payload && accessedUserId) {
-      const topic = `${eventName}.${accessedUserId}`;      // Publish the event with the record and the sourceClientId
+      const topic = `${eventName}.${accessedUserId}`; // Publish the event with the record and the sourceClientId
       pubsub.publish(topic, {
         // The subscription payload depends on the event type
         // TODO: Add more event types as needed (currently doesn't use this info so not needed)
-        ...(eventName === 'INGREDIENT_UPDATED' 
-          ? { ingredientUpdated: payload.record } 
+        ...(eventName === "INGREDIENT_UPDATED"
+          ? { ingredientUpdated: payload.record }
           : { mealUpdated: payload.record }),
         sourceClientId: sourceClientId, // Pass the originating client's ID
       });
     } else if (payload && payload.record && !accessedUserId) {
       // Log a warning if userId is missing, as the event cannot be targeted correctly
       console.warn(
-        `Mutation ${resolver.name} completed, but userId is missing on the record. Cannot publish event.`
+        `Mutation ${resolver.name} completed, but userId is missing on the record. Cannot publish event.`,
       );
     }
 

@@ -11,7 +11,13 @@ const graphqlSchema = require("./graphql/graphqlSchema");
 const { ApolloLink } = require("@apollo/client/core");
 
 // Load environment variables
-const { mongodb_url, jwt_secret, node_env, frontend_url, port } = require("./utils/env");
+const {
+  mongodb_url,
+  jwt_secret,
+  node_env,
+  frontend_url,
+  port,
+} = require("./utils/env");
 
 // Websocket imports
 const { WebSocketServer } = require("ws");
@@ -65,7 +71,9 @@ const authenticateUser = async (req) => {
 // Start Apollo Server with Express
 async function startServer() {
   await mongoose.connect(mongodb_url);
-  console.log(`🌿 MongoDB Connected from ${mongodb_url.slice(0, 35)}${mongodb_url.length > 35 ? "..." : ""}`);
+  console.log(
+    `🌿 MongoDB Connected from ${mongodb_url.slice(0, 35)}${mongodb_url.length > 35 ? "..." : ""}`,
+  );
 
   const server = new ApolloServer({
     schema: graphqlSchema,
@@ -88,10 +96,10 @@ async function startServer() {
           key === "__typename" ? undefined : value;
         requestContext.request.variables = JSON.parse(
           JSON.stringify(requestContext.request.variables),
-          omitTypename
+          omitTypename,
         );
       }
-      
+
       return {};
     },
   });
@@ -121,7 +129,7 @@ async function startServer() {
         return { pubsub };
       },
     },
-    wsServer
+    wsServer,
   );
 
   // Start the Apollo Server
@@ -132,7 +140,7 @@ async function startServer() {
     cors({
       origin: frontend_url || "http://localhost:3000",
       credentials: true,
-    })
+    }),
   );
   app.use(express.json());
   app.use(cookieParser());
@@ -155,7 +163,7 @@ async function startServer() {
           res,
         };
       },
-    })
+    }),
   );
 
   // Error handling middleware
