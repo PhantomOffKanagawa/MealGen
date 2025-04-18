@@ -11,6 +11,7 @@ const jwt_secret = process.env.JWT_SECRET || "your_jwt_secret";
 const node_env = process.env.NODE_ENV || "development";
 const frontend_url = process.env.FRONTEND_URL || "http://localhost:3000";
 const port = process.env.BACKEND_PORT || 4000;
+const clear_data = process.env.CLEAR_DATA || false;
 
 module.exports = {
   mongodb_url,
@@ -18,4 +19,5 @@ module.exports = {
   node_env,
   frontend_url,
   port,
+  clear_data,
 };

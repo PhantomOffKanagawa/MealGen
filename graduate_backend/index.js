@@ -18,8 +18,6 @@ const {
   port,
 } = require("./utils/env");
 
-console.log(mongodb_url, jwt_secret, node_env, frontend_url, port)
-
 // Websocket imports
 const { WebSocketServer } = require("ws");
 const { useServer } = require("graphql-ws/use/ws");

@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "prettier": "prettier --write ."
+    "prettier": "prettier --write .",
+    "seed": "node utils/seedDatabase.js"
   },
   "dependencies": {
     "@apollo/client": "^3.13.8",
