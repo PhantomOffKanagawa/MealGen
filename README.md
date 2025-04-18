@@ -28,6 +28,12 @@ MealGen helps users plan meals, track nutrition, and manage food costs effective
 - **GraphQL Compose** for schema generation
 - **JWT** for authentication
 
+## Learning Highlights
+
+> [!TIP]
+> Most of my challenges and learning experiences are documented in the wiki pages. \
+> While they generally document the process of building the application quotes marked with `> [!NOTE]` or some other highlight are more personal notes as well as problems and how I solved them.
+
 ## Project Structure
 
 The project is organized into two main directories:
