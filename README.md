@@ -33,7 +33,7 @@ MealGen helps users plan meals, track nutrition, and manage food costs effective
 The project is organized into two main directories:
 
 ```
-graduate_project_v/
+MealGen/
 ├── graduate_frontend/    # Next.js frontend application
 ├── graduate_backend/     # Node.js GraphQL backend
 ```
@@ -81,8 +81,8 @@ graduate_backend/
 
 1. Clone the repository:
    ```bash
-   git clone <repository-url>
-   cd graduate_project_v
+   git clone https://github.com/PhantomOffKanagawa/MealGen.git
+   cd MealGen
    ```
 
 2. Backend setup:
