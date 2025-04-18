@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import Header from "@/components/Header";
+import AuthGuard from "@/components/AuthGuard";
 import { ThemeProvider } from "@mui/material/styles";
 import { theme } from "@/utils/theme";
 
@@ -26,8 +27,7 @@ export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
-}>) {
-  return (
+}>) {  return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
@@ -37,7 +37,10 @@ export default function RootLayout({
           <ThemeProvider theme={theme}>
             <Header />
             <main className="min-h-screen">
-              {children}
+              {/* AuthGuard will handle loading states and redirects based on auth status */}
+              <AuthGuard>
+                {children}
+              </AuthGuard>
             </main>
             </ThemeProvider>
           </AppRouterCacheProvider>

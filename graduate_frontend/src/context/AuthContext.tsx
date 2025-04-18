@@ -27,6 +27,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Function to load the user data from local storage or an API
         const loadUser = async () => {
             try {
+                // Check if token exists before making the API call
+                const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('auth_token');
+                if (!hasToken) {
+                    // Skip API call if no token exists
+                    setUser(null);
+                    return;
+                }
+                
                 const userData = await getCurrentUser(); // Call the authService to get the current user
                 setUser(userData); // Set the user state with the retrieved user data
             } catch (err) {

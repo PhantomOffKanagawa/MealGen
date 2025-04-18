@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
     Box,
@@ -21,6 +21,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import LockIcon from '@mui/icons-material/Lock';
 import EmailIcon from '@mui/icons-material/Email';
 import CakeIcon from '@mui/icons-material/Cake';
+import { theme } from '@/utils/theme';
 
 export default function AuthPage() {
     const theme = useTheme();
@@ -32,6 +33,7 @@ export default function AuthPage() {
     const [formError, setFormError] = useState('');
     const { login, register, error, loading } = useAuth();
     const router = useRouter();
+    const pathname = usePathname();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -47,11 +49,23 @@ export default function AuthPage() {
                 }
                 await register(name, email, password, age);
             }
-            router.push('/');
+            if (pathname == "/auth") {
+                router.push('/');
+            }
         } catch (err: any) {
             setFormError(err.message || 'An error occurred');
         }
     };
+
+    const routeColorTranslation: { [key: string]: { main: string; dark: string } } = {
+        '/': theme.palette.primary,
+        '/ingredients': theme.palette.success,
+        '/meals': theme.palette.secondary,
+        '/meal-plans': theme.palette.primary,
+        '/auth': theme.palette.primary,
+    };
+
+    const routeColor = routeColorTranslation[pathname] || theme.palette.primary;
 
     return (
         <>
@@ -60,7 +74,7 @@ export default function AuthPage() {
                 minHeight: '100vh',
                 display: 'flex',
                 alignItems: 'center',
-                background: `linear-gradient(135deg, ${alpha(theme.palette.primary.dark, 0.9)}, ${alpha(theme.palette.primary.main, 0.85)})`,
+                background: `linear-gradient(135deg, ${alpha(routeColor.dark, 0.9)}, ${alpha(routeColor.main, 0.85)})`,
                 py: 8,
             }}
         >
@@ -74,8 +88,8 @@ export default function AuthPage() {
                         alignItems: 'center',
                         borderRadius: 2,
                         backgroundColor: theme.palette.background.paper,
-                        boxShadow: `0 8px 32px ${alpha(theme.palette.primary.main, 0.2)}`,
-                        border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+                        boxShadow: `0 8px 32px ${alpha(routeColor.main, 0.2)}`,
+                        border: `1px solid ${alpha(routeColor.main, 0.1)}`,
                         overflow: 'hidden',
                     }}
                 >
@@ -85,7 +99,7 @@ export default function AuthPage() {
                         display: 'flex',
                         alignItems: 'center',
                         gap: 1.5,
-                        color: theme.palette.primary.main
+                        color: routeColor.main
                     }}>
                         <PersonIcon fontSize="large" />
                         <Typography
@@ -93,7 +107,7 @@ export default function AuthPage() {
                             variant="h5"
                             sx={{ 
                                 fontWeight: 600, 
-                                color: theme.palette.primary.main
+                                color: routeColor.main
                             }}
                         >
                             {isLogin ? 'Sign in to your account' : 'Create a new account'}
@@ -102,7 +116,7 @@ export default function AuthPage() {
                     
                     <Divider sx={{ 
                         width: '100%', 
-                        borderColor: alpha(theme.palette.primary.main, 0.2) 
+                        borderColor: alpha(routeColor.main, 0.2) 
                     }} />
                     
                     {(formError || error) && (
@@ -132,7 +146,7 @@ export default function AuthPage() {
                         <Box sx={{ 
                             p: 3,
                             borderRadius: 1,
-                            border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+                            border: `1px solid ${alpha(routeColor.main, 0.1)}`,
                             mb: 2
                         }}>
                             {!isLogin && (
@@ -147,7 +161,7 @@ export default function AuthPage() {
                                     sx={{ mb: 2 }}
                                     InputProps={{
                                         sx: { borderRadius: 1 },
-                                        startAdornment: <PersonIcon sx={{ mr: 1, color: alpha(theme.palette.primary.main, 0.7) }} />
+                                        startAdornment: <PersonIcon sx={{ mr: 1, color: alpha(routeColor.main, 0.7) }} />
                                     }}
                                 />
                             )}
@@ -204,7 +218,7 @@ export default function AuthPage() {
 
                         <Divider sx={{ 
                             my: 2,
-                            borderColor: alpha(theme.palette.primary.main, 0.1) 
+                            borderColor: alpha(routeColor.main, 0.1) 
                         }} />
 
                         <Button
@@ -218,7 +232,7 @@ export default function AuthPage() {
                                 mb: 2,
                                 py: 1.2,
                                 borderRadius: 1,
-                                boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`
+                                boxShadow: `0 4px 12px ${alpha(routeColor.main, 0.3)}`
                             }}
                         >
                             {loading ? <CircularProgress size={24} color="inherit" /> : isLogin ? 'Sign in' : 'Sign up'}
