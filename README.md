@@ -87,7 +87,7 @@ Docker is recommended for easy setup and detailed in the wiki.
 - ~~Add yarn prettier to package.json~~
 - ~~Add wiki pages~~
    - ~~Finish all wiki pages~~
-- Update README.md with up to date info
+- ~~Update README.md with up to date info~~
 - ~~Switch .env files with dummy data and reissue api keys~~
 - ~~auth Page Error Handling~~
 - Sort out last minute dnd bugs
