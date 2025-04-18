@@ -94,6 +94,8 @@ Docker is recommended for easy setup and detailed in the wiki.
 
 ## Next Steps
 
+- Refactor page renders for readability
+- Implement styling to reduce hand-written CSS
 - Implement error handling and logging on frontend
 - Implement more aggressive mongodb validation rules
 - Implement automatic calculation and recalculation for nutritional values
