@@ -1,23 +1,23 @@
-import React, { useState } from "react";
 import { CollisionPriority } from "@dnd-kit/abstract";
 import { useSortable } from "@dnd-kit/react/sortable";
-import {
-  Paper,
-  Typography,
-  Box,
-  Divider,
-  TextField,
-  IconButton,
-  Tooltip,
-  useTheme,
-  alpha,
-} from "@mui/material";
+import CheckIcon from "@mui/icons-material/Check";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import EditIcon from "@mui/icons-material/Edit";
 import FastfoodIcon from "@mui/icons-material/Fastfood";
 import KitchenIcon from "@mui/icons-material/Kitchen";
 import RestaurantMenuIcon from "@mui/icons-material/RestaurantMenu";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import CheckIcon from "@mui/icons-material/Check";
+import {
+  alpha,
+  Box,
+  Divider,
+  IconButton,
+  Paper,
+  TextField,
+  Tooltip,
+  Typography,
+  useTheme,
+} from "@mui/material";
+import React, { useState } from "react";
 
 interface ColumnProps {
   children: React.ReactNode;
@@ -43,20 +43,6 @@ export function Column({
   const theme = useTheme();
 
   const isFixedStore = type === "ingredient-store" || type === "meal-store";
-
-  // Define the item types this column accepts
-  const getAcceptedItemTypes = () => {
-    switch (type) {
-      case "ingredient-store":
-        return ["ingredient"]; // Only accept ingredients
-      case "meal-store":
-        return ["meal"]; // Only accept meals
-      case "meal-plan":
-        return ["ingredient", "meal"]; // Accept both ingredients and meals
-      default:
-        return ["ingredient", "meal"];
-    }
-  };
 
   const { ref } = useSortable({
     id,

@@ -1,13 +1,12 @@
-import React from "react";
 import {
   Box,
   CircularProgress,
-  Typography,
   Paper,
+  Typography,
   alpha,
   useTheme,
 } from "@mui/material";
-import KitchenIcon from "@mui/icons-material/Kitchen";
+import React from "react";
 
 interface LoadingStateDisplayProps {
   color?: "primary" | "secondary" | "error" | "info" | "success" | "warning";

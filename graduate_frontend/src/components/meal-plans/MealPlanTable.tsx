@@ -56,7 +56,7 @@ const MealPlanTable: React.FC<MealPlanTableProps> = ({
   if (mealPlans.length === 0) {
     return (
       <Alert severity="info" sx={{ my: 2 }}>
-        You don't have any meal plans yet. Create your first one!
+        You don&apos;t have any meal plans yet. Create your first one!
       </Alert>
     );
   }

@@ -1,43 +1,41 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import dynamic from "next/dynamic";
+import DataTable, { Column } from "@/components/DataTable";
+import DeleteConfirmationDialog from "@/components/DeleteConfirmationDialog";
+import LoadingStateDisplay from "@/components/LoadingStateDisplay";
+import PageHeader from "@/components/PageHeader";
+import { useSubscription } from "@apollo/client";
+import FastfoodIcon from "@mui/icons-material/Fastfood";
 import {
-  Container,
-  Box,
-  CircularProgress,
-  Snackbar,
   Alert,
-  useTheme,
   alpha,
-  Typography,
+  Box,
   Card,
   CardContent,
+  Container,
   Grid,
+  Snackbar,
+  Typography,
+  useTheme
 } from "@mui/material";
-import FastfoodIcon from "@mui/icons-material/Fastfood";
+import dynamic from "next/dynamic";
+import React, { useCallback, useEffect, useState } from "react";
+import { useAuth } from "../../context/AuthContext";
 import graphqlClient, { CLIENT_ID } from "../../services/graphql";
-import { useSubscription, gql } from "@apollo/client";
-import {
-  getAllMeals,
-  createMeal,
-  updateMeal,
-  deleteMeal,
-  Meal,
-  MealIngredient,
-  MEAL_UPDATED,
-} from "../../services/mealService";
 import {
   getAllIngredients,
   Ingredient,
   INGREDIENT_UPDATED,
 } from "../../services/ingredientService";
-import { useAuth } from "../../context/AuthContext";
-import PageHeader from "@/components/PageHeader";
-import DataTable from "@/components/DataTable";
-import { Column } from "@/components/DataTable";
-import DeleteConfirmationDialog from "@/components/DeleteConfirmationDialog";
-import LoadingStateDisplay from "@/components/LoadingStateDisplay";
+import {
+  createMeal,
+  deleteMeal,
+  getAllMeals,
+  Meal,
+  MEAL_UPDATED,
+  MealIngredient,
+  updateMeal,
+} from "../../services/mealService";
 
 // Fix for hydration issues - load these components only on client side
 const ClientSnackbar = dynamic(() => Promise.resolve(Snackbar), { ssr: false });

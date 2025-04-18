@@ -8,45 +8,44 @@
  */
 "use client";
 
-import React, { useState, useEffect } from "react";
-import dynamic from "next/dynamic";
+import DataTable, { Column } from "@/components/DataTable";
+import DeleteConfirmationDialog from "@/components/DeleteConfirmationDialog";
+import DragDropMealPlanForm from "@/components/dnd/DragDropMealPlanForm";
+import LoadingStateDisplay from "@/components/LoadingStateDisplay";
+import PageHeader from "@/components/PageHeader";
+import { useSubscription } from "@apollo/client";
+import RestaurantMenuIcon from "@mui/icons-material/RestaurantMenu";
 import {
-  Container,
-  Box,
-  Snackbar,
   Alert,
-  useTheme,
   alpha,
-  Typography,
+  Box,
   Card,
   CardContent,
+  Container,
   Grid,
+  Snackbar,
+  Typography,
+  useTheme,
 } from "@mui/material";
-import RestaurantMenuIcon from "@mui/icons-material/RestaurantMenu";
+import dynamic from "next/dynamic";
+import React, { useEffect, useState } from "react";
+import { useAuth } from "../../context/AuthContext";
 import graphqlClient, { CLIENT_ID } from "../../services/graphql";
-import {
-  getAllMealPlans,
-  createMealPlan,
-  updateMealPlan,
-  deleteMealPlan,
-  MealPlan,
-  MealPlanItem,
-  MEAL_PLAN_UPDATED,
-} from "../../services/mealPlanService";
 import {
   getAllIngredients,
   Ingredient,
   INGREDIENT_UPDATED,
 } from "../../services/ingredientService";
+import {
+  createMealPlan,
+  deleteMealPlan,
+  getAllMealPlans,
+  MEAL_PLAN_UPDATED,
+  MealPlan,
+  MealPlanItem,
+  updateMealPlan,
+} from "../../services/mealPlanService";
 import { getAllMeals, Meal, MEAL_UPDATED } from "../../services/mealService";
-import { useAuth } from "../../context/AuthContext";
-import PageHeader from "@/components/PageHeader";
-import DataTable from "@/components/DataTable";
-import { Column } from "@/components/DataTable";
-import DeleteConfirmationDialog from "@/components/DeleteConfirmationDialog";
-import DragDropMealPlanForm from "@/components/dnd/DragDropMealPlanForm";
-import { useSubscription } from "@apollo/client";
-import LoadingStateDisplay from "@/components/LoadingStateDisplay";
 
 // Fix for hydration issues - load these components only on client side
 const ClientSnackbar = dynamic(() => Promise.resolve(Snackbar), { ssr: false });
@@ -388,7 +387,7 @@ const MealPlansPage: React.FC = () => {
   /**
    * Submits the meal plan form for creation or update
    */
-  const handleSubmit = async (close: Boolean) => {
+  const handleSubmit = async (close: boolean) => {
     // Validate form
     if (!currentMealPlan.name) {
       setSnackbar({

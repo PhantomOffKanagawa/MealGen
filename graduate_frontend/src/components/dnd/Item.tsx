@@ -1,30 +1,28 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useSortable } from "@dnd-kit/react/sortable";
-import {
-  Card,
-  CardContent,
-  Typography,
-  Chip,
-  Box,
-  Avatar,
-  IconButton,
-  TextField,
-  ButtonGroup,
-  Stack,
-  Tooltip,
-  Divider,
-  useTheme,
-  alpha,
-} from "@mui/material";
-import RestaurantIcon from "@mui/icons-material/Restaurant";
-import KitchenIcon from "@mui/icons-material/Kitchen";
 import AddIcon from "@mui/icons-material/Add";
-import RemoveIcon from "@mui/icons-material/Remove";
-import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import GrainIcon from "@mui/icons-material/Grain";
+import KitchenIcon from "@mui/icons-material/Kitchen";
+import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
 import OpacityIcon from "@mui/icons-material/Opacity";
-import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+import RemoveIcon from "@mui/icons-material/Remove";
+import RestaurantIcon from "@mui/icons-material/Restaurant";
+import {
+  alpha,
+  Avatar,
+  Box,
+  ButtonGroup,
+  Card,
+  CardContent,
+  IconButton,
+  Stack,
+  TextField,
+  Tooltip,
+  Typography,
+  useTheme
+} from "@mui/material";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface ItemProps {
   id: string;

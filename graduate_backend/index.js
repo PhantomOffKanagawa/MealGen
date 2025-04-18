@@ -8,7 +8,6 @@ const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const graphqlSchema = require("./graphql/graphqlSchema");
-const { ApolloLink } = require("@apollo/client/core");
 
 // Load environment variables
 const {
@@ -18,6 +17,8 @@ const {
   frontend_url,
   port,
 } = require("./utils/env");
+
+console.log(mongodb_url, jwt_secret, node_env, frontend_url, port)
 
 // Websocket imports
 const { WebSocketServer } = require("ws");

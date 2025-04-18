@@ -1,5 +1,4 @@
-import { ApolloClient, NormalizedCacheObject } from "@apollo/client";
-import { useMutation, gql, useQuery, useSubscription } from "@apollo/client";
+import { gql } from "@apollo/client";
 
 // Types
 export interface MealIngredient {

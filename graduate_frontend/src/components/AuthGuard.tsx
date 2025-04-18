@@ -1,14 +1,13 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import LoadingStateDisplay from "./LoadingStateDisplay";
 import LockIcon from "@mui/icons-material/Lock";
 import { Box } from "@mui/material";
+import { usePathname, useRouter } from "next/navigation";
+import { ReactNode, useEffect, useState } from "react";
+import LoadingStateDisplay from "./LoadingStateDisplay";
 
 import AuthPage from "@/app/auth/page";
-import { theme } from "@/utils/theme";
 
 interface AuthGuardProps {
   children: ReactNode;

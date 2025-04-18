@@ -1,0 +1,67 @@
+services:
+  # MongoDB container
+  mongodb:
+    image: mongo:latest
+    container_name: mealgen-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    # volumes:
+      # - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    networks:
+      - mealgen-network
+
+  # Backend service (GraphQL API)
+  backend:
+    build:
+      context: ./graduate_backend
+      dockerfile: Dockerfile
+    container_name: mealgen-backend
+    restart: always
+    ports:
+      - "4000:4000"
+    environment:
+      # - MONGODB_URL=mongodb://admin:password@mongodb:27017/mealgen?authSource=admin
+      - MONGODB_URL=mongodb://admin:password@mongodb:27017/mealgen?authSource=admin
+      - JWT_SECRET=your_secure_jwt_secret
+      - PORT=4000
+      - NODE_ENV=production
+      - FRONTEND_URL=http://localhost:3000
+    depends_on:
+      - mongodb
+    networks:
+      - mealgen-network
+    # volumes:
+      # - ./graduate_backend:/app
+      # - /app/node_modules
+
+  # Frontend service (Next.js)
+  frontend:
+    build:
+      context: ./graduate_frontend
+      dockerfile: Dockerfile
+    container_name: mealgen-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_GRAPHQL_HTTP_URL=http://backend:4000/graphql
+      - NEXT_PUBLIC_GRAPHQL_WS_URL=ws://backend:4000/graphql
+      - PORT=3000
+    depends_on:
+      - backend
+    networks:
+      - mealgen-network
+    # volumes:
+      # - ./graduate_frontend:/app
+      # - /app/node_modules
+
+networks:
+  mealgen-network:
+    driver: bridge
+
+# volumes:
+#   mongodb_data:

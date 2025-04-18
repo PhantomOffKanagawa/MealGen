@@ -25,7 +25,7 @@ import {
 import RestaurantIcon from "@mui/icons-material/Restaurant";
 import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
 import LocalDiningIcon from "@mui/icons-material/LocalDining";
-import { Meal, MealIngredient } from "../../services/mealService";
+import { Meal } from "../../services/mealService";
 import { Ingredient } from "../../services/ingredientService";
 
 interface MealEditDialogProps {

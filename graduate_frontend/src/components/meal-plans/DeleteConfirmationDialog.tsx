@@ -34,7 +34,7 @@ const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
     <Dialog open={open} onClose={onClose}>
       <DialogTitle>Confirm Deletion</DialogTitle>
       <DialogContent>
-        Are you sure you want to delete the meal plan "{mealPlan.name}"? This
+        Are you sure you want to delete the meal plan &quot;{mealPlan.name}&quot;? This
         action cannot be undone.
       </DialogContent>
       <DialogActions>

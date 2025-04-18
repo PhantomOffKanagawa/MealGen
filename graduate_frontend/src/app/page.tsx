@@ -1,6 +1,13 @@
 "use client";
 
+import { useAuth } from "@/context/AuthContext";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import FastfoodIcon from "@mui/icons-material/Fastfood";
+import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
+import KitchenIcon from "@mui/icons-material/Kitchen";
+import RestaurantMenuIcon from "@mui/icons-material/RestaurantMenu";
 import {
+  alpha,
   Box,
   Button,
   Card,
@@ -8,19 +15,10 @@ import {
   Container,
   Grid,
   Typography,
-  useTheme,
   useMediaQuery,
-  alpha,
+  useTheme,
 } from "@mui/material";
-import Image from "next/image";
 import Link from "next/link";
-import { useAuth } from "@/context/AuthContext";
-import RestaurantMenuIcon from "@mui/icons-material/RestaurantMenu";
-import FastfoodIcon from "@mui/icons-material/Fastfood";
-import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
-import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
-import KitchenIcon from "@mui/icons-material/Kitchen";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 export default function Home() {
   const { user, loading } = useAuth();

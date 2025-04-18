@@ -1,53 +1,34 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { DragDropProvider } from "@dnd-kit/react";
-import { move } from "@dnd-kit/helpers";
-import { debounce } from "lodash";
-import {
-  Box,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  AppBar,
-  Toolbar,
-  Typography,
-  CircularProgress,
-  Divider,
-  IconButton,
-  useTheme,
-  alpha,
-  Switch,
-  FormControlLabel,
-  Tooltip,
-} from "@mui/material";
-import NutritionTracker from "@/components/meal-plans/NutritionTracker";
-import CloseIcon from "@mui/icons-material/Close";
-import SaveIcon from "@mui/icons-material/Save";
-import AddIcon from "@mui/icons-material/Add";
-import { MealPlan, MealPlanItem } from "../../services/mealPlanService";
-import { Ingredient } from "../../services/ingredientService";
-import { Meal } from "../../services/mealService";
 import { Column } from "@/components/dnd/Column";
 import { Item } from "@/components/dnd/Item";
-
-// Define TypeScript interfaces for the component data structures
-interface ItemData {
-  id: string;
-  name: string;
-  type: "ingredient" | "meal";
-  calories: number;
-  price: number;
-  macros: {
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-  };
-}
+import NutritionTracker from "@/components/meal-plans/NutritionTracker";
+import { move } from "@dnd-kit/helpers";
+import { DragDropProvider } from "@dnd-kit/react";
+import AddIcon from "@mui/icons-material/Add";
+import CloseIcon from "@mui/icons-material/Close";
+import SaveIcon from "@mui/icons-material/Save";
+import {
+  alpha,
+  AppBar,
+  Box,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogContent,
+  FormControlLabel,
+  IconButton,
+  Switch,
+  TextField,
+  Toolbar,
+  Tooltip,
+  Typography
+} from "@mui/material";
+import { debounce } from "lodash";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Ingredient } from "../../services/ingredientService";
+import { MealPlan, MealPlanItem } from "../../services/mealPlanService";
+import { Meal } from "../../services/mealService";
 
 interface ColumnData {
   id: string;
@@ -97,7 +78,6 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
   const [liveEditMode, setLiveEditMode] = useState(false);
   // State to track changes for live edit mode
   const [savingLiveEdit, setSavingLiveEdit] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
   // Memoize the mapped items to prevent recreating them on every render
   const { ingredientItems, mealItems, itemsData } = useMemo(() => {
@@ -467,9 +447,6 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
 
         // Call onSubmit to save to database
         onSubmit(false);
-
-        // Update last saved timestamp
-        setLastSaved(new Date());
 
         // Reset saving state
         setTimeout(() => setSavingLiveEdit(false), 500);
