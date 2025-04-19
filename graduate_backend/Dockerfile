@@ -11,14 +11,14 @@ RUN yarn install
 # Copy app source
 COPY . .
 
-# Make entrypoint script executable
-RUN chmod +x docker-entrypoint.sh
-
 # Expose the API port
 EXPOSE ${PORT:-4000}
 
-# Set entrypoint to our custom script
-ENTRYPOINT ["./docker-entrypoint.sh"]
-
-# Command to run the application
-CMD ["yarn", "start"]
+# Use a shell form CMD to run your logic before starting the app
+CMD set -e; \
+    if [ "${SEED:-false}" = "true" ]; then \
+        echo "🌱 Seeding database..."; \
+        node utils/seedDatabase.js; \
+        echo "✅ Database seeding complete."; \
+    fi; \
+    exec yarn start
