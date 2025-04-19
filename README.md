@@ -44,7 +44,7 @@ MealGen/
 ├── graduate_backend/     # Node.js GraphQL backend
 ```
 
-Further details are in the [Project Structure](../../Project-Structure) wiki page.
+Further details are in the [Project Structure](https://github.com/PhantomOffKanagawa/MealGen/wiki/Project-Structure) wiki page.
 
 ## Getting Started
 
@@ -55,7 +55,7 @@ Further details are in the [Project Structure](../../Project-Structure) wiki pag
 
 ### Installation and Setup
 
-The simplest way to get started is to clone the repository and follow the setup instructions in the [Setup and Installation](../../Setup-and-Installation) wiki page. \
+The simplest way to get started is to clone the repository and follow the setup instructions in the [Setup and Installation](https://github.com/PhantomOffKanagawa/MealGen/wiki/Setup-and-Installation) wiki page. \
 Docker is recommended for easy setup and detailed in the wiki.
 
 ## Key Features
@@ -79,8 +79,8 @@ Docker is recommended for easy setup and detailed in the wiki.
 
 ## Development Notes
 
-- [Development Notes](../../Development-Notes) - Insights and lessons learned during development
-- [Learning Resources](../../Learning-Resources) - Useful resources for learning about the technologies used in this project
+- [Development Notes](https://github.com/PhantomOffKanagawa/MealGen/wiki/Development-Notes) - Insights and lessons learned during development
+- [Learning Resources](https://github.com/PhantomOffKanagawa/MealGen/wiki/Learning-Resources) - Useful resources for learning about the technologies used in this project
 
 ## Current To-Do
 - Test Setup-and-Installation.md information
@@ -90,7 +90,7 @@ Docker is recommended for easy setup and detailed in the wiki.
 - ~~Update README.md with up to date info~~
 - ~~Switch .env files with dummy data and reissue api keys~~
 - ~~auth Page Error Handling~~
-- Sort out last minute dnd bugs
+- ~~Sort out last minute dnd bugs~~
 
 ## Next Steps
 
