@@ -497,9 +497,6 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
       ...prev,
       [itemId]: quantity,
     }));
-
-    // Recalculate nutrition after quantity change
-    calculateTotalNutrition();
   };
 
   // Calculate total calories and macros for a group
