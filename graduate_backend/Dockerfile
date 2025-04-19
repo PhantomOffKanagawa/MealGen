@@ -15,6 +15,8 @@ COPY . .
 EXPOSE ${PORT:-4000}
 
 # Use a shell form CMD to run your logic before starting the app
+# This will create a warning in the logs, but it will not affect the execution of the container
+# This was a necessary last minute hotfix to ensure the database is seeded before starting the app
 CMD set -e; \
     if [ "${SEED:-false}" = "true" ]; then \
         echo "🌱 Seeding database..."; \
