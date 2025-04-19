@@ -185,7 +185,10 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
 
         if (Object.keys(currentMealPlan.items).length === 0) {
           // Initialize items and columns if not already done
-          const defaultGroups = ["Breakfast", "Lunch", "Dinner"];
+          // const defaultGroups = ["Breakfast", "Lunch", "Dinner"];
+          // Leave this empty for now
+          const defaultGroups: string[] = [];
+
           defaultGroups.forEach((group) => {
             uniqueGroups.add(group);
           });
