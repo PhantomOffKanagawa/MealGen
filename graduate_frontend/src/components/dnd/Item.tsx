@@ -115,16 +115,19 @@ export function Item({
     },
     [debouncedNotifyChange],
   );
-  return (
-    <Card
+  return (    <Card
       ref={ref}
       sx={{
         margin: "8px",
-        opacity: isDragging ? 0.5 : 1,
-        transform: isDragging ? "scale(1.05)" : "scale(1)",
-        transition: "all 0.3s ease",
+        opacity: isDragging ? 0.7 : 1,
+        // Remove scale transformation for dragging to avoid the jump
+        transform: isDragging ? "none" : "scale(1)",
+        // Different transition handling for dragging vs normal state
+        transition: isDragging 
+          ? "opacity 0.2s ease" 
+          : "all 0.3s ease",
         boxShadow: isDragging
-          ? `0 0 15px ${alpha(
+          ? `0 8px 20px ${alpha(
               isIngredient
                 ? theme.palette.success.main
                 : theme.palette.secondary.main,
@@ -136,12 +139,14 @@ export function Item({
                 : theme.palette.secondary.main,
               0.2,
             )}`,
-        cursor: "grab",
-        backgroundColor: alpha(theme.palette.background.paper, 0.8),
+        cursor: isDragging ? "grabbing" : "grab",
+        // Increase z-index when dragging
+        zIndex: isDragging ? 1300 : 1,
+        backgroundColor: alpha(theme.palette.background.paper, isDragging ? 0.9 : 0.8),
         backdropFilter: "blur(8px)",
         border: isIngredient
-          ? `1px solid ${alpha(theme.palette.success.main, 0.4)}`
-          : `1px solid ${alpha(theme.palette.secondary.main, 0.4)}`,
+          ? `1px solid ${alpha(theme.palette.success.main, isDragging ? 0.6 : 0.4)}`
+          : `1px solid ${alpha(theme.palette.secondary.main, isDragging ? 0.6 : 0.4)}`,
         borderLeft: isIngredient
           ? `4px solid ${theme.palette.success.main}`
           : `4px solid ${theme.palette.secondary.main}`,
@@ -154,8 +159,9 @@ export function Item({
           content: '""',
           position: "absolute",
           inset: 0,
-          opacity: 0,
-          transition: "opacity 0.3s ease",
+          opacity: isDragging ? 0.2 : 0,
+          // Don't transition this property during dragging
+          transition: isDragging ? "none" : "opacity 0.3s ease",
           boxShadow: `inset 0 0 10px ${alpha(
             isIngredient
               ? theme.palette.success.main
@@ -164,7 +170,8 @@ export function Item({
           )}`,
           pointerEvents: "none",
         },
-        "&:hover": {
+        // Disable hover effects while dragging
+        "&:hover": !isDragging ? {
           boxShadow: `0 4px 15px ${alpha(
             isIngredient
               ? theme.palette.success.main
@@ -175,7 +182,7 @@ export function Item({
           "&::after": {
             opacity: 1,
           },
-        },
+        } : {},
       }}
     >
       <CardContent sx={{ p: 1.5, "&:last-child": { pb: 1.5 } }}>
