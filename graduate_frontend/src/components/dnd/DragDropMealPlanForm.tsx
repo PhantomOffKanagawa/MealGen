@@ -25,7 +25,7 @@ import {
   Typography,
 } from "@mui/material";
 import { debounce } from "lodash";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { Ingredient } from "../../services/ingredientService";
 import { MealPlan, MealPlanItem } from "../../services/mealPlanService";
 import { Meal } from "../../services/mealService";
@@ -167,14 +167,15 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
     price: 0,
   });
 
+  // Use a ref for tracking the need to recalculate nutrition
+  const needsNutritionUpdate = useRef(false);
+  
   // Initialize form with meal plan data when opened
   useEffect(() => {
     // Only run this effect when the dialog opens (from closed to open)
     // or when key dependencies change while dialog is open
     if (open && currentMealPlan) {
       if (updatePending || !previouslyOpen || !initialized) {
-        updatePending = false; // Reset update pending state
-
         // Set the meal plan name
         setMealPlanName(currentMealPlan.name);
 
@@ -243,6 +244,9 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
         setMealPlanOrder(groupOrder);
         setItemQuantities(newItemQuantities);
         setInitialized(true);
+        
+        // Mark for nutrition update after state is set
+        needsNutritionUpdate.current = true;
       }
     } else if (!open) {
       // Reset initialization flag when dialog closes
@@ -251,98 +255,159 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
 
     // Update the previouslyOpen tracking variable
     setPreviouslyOpen(open);
-  }, [open, currentMealPlan, defaultColumns, defaultItems, initialized]);
+  }, [open, currentMealPlan, defaultColumns, defaultItems, initialized, updatePending]);
 
-  // Listen for new ingredients coming from websocket updates
+  // Listen for new ingredients coming from websocket updates - with reduced dependencies
   useEffect(() => {
-    if (initialized && open) {
-      // Get all ingredient IDs currently in meal plan groups
-      const inUseIngredientIds = new Set<string>();
-      mealPlanOrder.forEach((groupId) => {
-        if (items[groupId]) {
-          items[groupId].forEach((itemId) => {
-            if (itemsData[itemId]?.type === "ingredient") {
-              inUseIngredientIds.add(itemId);
-            }
-          });
-        }
-      });
+    if (!initialized || !open) return;
+    
+    // Get all ingredient IDs currently in meal plan groups
+    const inUseIngredientIds = new Set<string>();
+    mealPlanOrder.forEach((groupId) => {
+      if (items[groupId]) {
+        items[groupId].forEach((itemId) => {
+          if (itemsData[itemId]?.type === "ingredient") {
+            inUseIngredientIds.add(itemId);
+          }
+        });
+      }
+    });
 
-      // Get current ingredient store IDs
-      const currentIngredientStoreIds = new Set(
-        items["ingredients-store"] || [],
+    // Get current ingredient store IDs
+    const currentIngredientStoreIds = new Set(
+      items["ingredients-store"] || [],
+    );
+
+    // Find new ingredient IDs that aren't in the store or in use
+    const newIngredientIds = ingredientItems
+      .map((ing) => ing.id)
+      .filter(
+        (id) =>
+          !currentIngredientStoreIds.has(id) && !inUseIngredientIds.has(id),
       );
 
-      // Find new ingredient IDs that aren't in the store or in use
-      const newIngredientIds = ingredientItems
-        .map((ing) => ing.id)
-        .filter(
-          (id) =>
-            !currentIngredientStoreIds.has(id) && !inUseIngredientIds.has(id),
-        );
-
-      // If we have new ingredients, update the ingredients store
-      if (newIngredientIds.length > 0) {
-        console.log("Adding new ingredients to store:", newIngredientIds);
-        setItems((prev) => ({
-          ...prev,
-          "ingredients-store": [
-            ...prev["ingredients-store"],
-            ...newIngredientIds,
-          ],
-        }));
-      }
+    // If we have new ingredients, update the ingredients store
+    if (newIngredientIds.length > 0) {
+      console.log("Adding new ingredients to store:", newIngredientIds);
+      setItems((prev) => ({
+        ...prev,
+        "ingredients-store": [
+          ...prev["ingredients-store"],
+          ...newIngredientIds,
+        ],
+      }));
     }
-  }, [
-    ingredients,
-    initialized,
-    open,
-    items,
-    mealPlanOrder,
-    itemsData,
-    ingredientItems,
-  ]);
+  }, [ingredients, initialized, open, items, mealPlanOrder, itemsData, ingredientItems]);
 
-  // Listen for new meals coming from websocket updates
+  // Listen for new meals coming from websocket updates - with reduced dependencies
   useEffect(() => {
-    if (initialized && open) {
-      // Get all meal IDs currently in meal plan groups
-      const inUseMealIds = new Set<string>();
-      mealPlanOrder.forEach((groupId) => {
-        if (items[groupId]) {
-          items[groupId].forEach((itemId) => {
-            if (itemsData[itemId]?.type === "meal") {
-              inUseMealIds.add(itemId);
-            }
-          });
-        }
-      });
-
-      // Get current meal store IDs
-      const currentMealStoreIds = new Set(items["meals-store"] || []);
-
-      // Find new meal IDs that aren't in the store or in use
-      const newMealIds = mealItems
-        .map((meal) => meal.id)
-        .filter((id) => !currentMealStoreIds.has(id) && !inUseMealIds.has(id));
-
-      // If we have new meals, update the meals store
-      if (newMealIds.length > 0) {
-        console.log("Adding new meals to store:", newMealIds);
-        setItems((prev) => ({
-          ...prev,
-          "meals-store": [...prev["meals-store"], ...newMealIds],
-        }));
+    if (!initialized || !open) return;
+    
+    // Get all meal IDs currently in meal plan groups
+    const inUseMealIds = new Set<string>();
+    mealPlanOrder.forEach((groupId) => {
+      if (items[groupId]) {
+        items[groupId].forEach((itemId) => {
+          if (itemsData[itemId]?.type === "meal") {
+            inUseMealIds.add(itemId);
+          }
+        });
       }
+    });
+
+    // Get current meal store IDs
+    const currentMealStoreIds = new Set(items["meals-store"] || []);
+
+    // Find new meal IDs that aren't in the store or in use
+    const newMealIds = mealItems
+      .map((meal) => meal.id)
+      .filter((id) => !currentMealStoreIds.has(id) && !inUseMealIds.has(id));
+
+    // If we have new meals, update the meals store
+    if (newMealIds.length > 0) {
+      console.log("Adding new meals to store:", newMealIds);
+      setItems((prev) => ({
+        ...prev,
+        "meals-store": [...prev["meals-store"], ...newMealIds],
+      }));
     }
   }, [meals, initialized, open, items, mealPlanOrder, itemsData, mealItems]);
 
-  // Recalculate nutrition whenever items or quantities change
+  // Memoized function to calculate nutrition for a group - prevents recalculation unless dependencies change
+  const calculateGroupNutrition = useCallback((groupId: string) => {
+    return (
+      items[groupId]?.reduce(
+        (total, itemId) => {
+          const item = itemsData[itemId];
+          const quantity = itemQuantities[itemId] || 1;
+
+          if (item) {
+            return {
+              calories:
+                total.calories + (item.macros?.calories || 0) * quantity,
+              protein: total.protein + (item.macros?.protein || 0) * quantity,
+              carbs: total.carbs + (item.macros?.carbs || 0) * quantity,
+              fat: total.fat + (item.macros?.fat || 0) * quantity,
+            };
+          }
+          return total;
+        },
+        { calories: 0, protein: 0, carbs: 0, fat: 0 },
+      ) || { calories: 0, protein: 0, carbs: 0, fat: 0 }
+    );
+  }, [items, itemQuantities, itemsData]);
+
+  // Memoized function to calculate price for a group
+  const calculateGroupPrice = useCallback((groupId: string) => {
+    return (
+      items[groupId]?.reduce((total, itemId) => {
+        const item = itemsData[itemId];
+        const quantity = itemQuantities[itemId] || 1;
+        return total + (item?.price || 0) * quantity;
+      }, 0) || 0
+    );
+  }, [items, itemQuantities, itemsData]);
+
+  // Better optimized total nutrition calculation
+  const calculateTotalNutrition = useCallback(() => {
+    // Reset flag since we're calculating now
+    needsNutritionUpdate.current = false;
+    
+    let totalCalories = 0;
+    let totalProtein = 0;
+    let totalCarbs = 0;
+    let totalFat = 0;
+    let totalPrice = 0;
+
+    mealPlanOrder.forEach((groupId) => {
+      const nutrition = calculateGroupNutrition(groupId);
+      totalCalories += nutrition.calories;
+      totalProtein += nutrition.protein;
+      totalCarbs += nutrition.carbs;
+      totalFat += nutrition.fat;
+      totalPrice += calculateGroupPrice(groupId);
+    });
+
+    setTotalNutrition({
+      calories: totalCalories,
+      protein: totalProtein,
+      carbs: totalCarbs,
+      fat: totalFat,
+      price: totalPrice,
+    });
+  }, [mealPlanOrder, calculateGroupNutrition, calculateGroupPrice]);
+
+  // More efficient nutrition calculation - only runs when needed
   useEffect(() => {
-    if (initialized) {
-      calculateTotalNutrition();
+    if (initialized && needsNutritionUpdate.current) {
+      // Use requestAnimationFrame to batch the calculation with browser's render cycle
+      const timerId = requestAnimationFrame(() => {
+        calculateTotalNutrition();
+      });
+      
+      return () => cancelAnimationFrame(timerId);
     }
-  }, [items, itemQuantities, mealPlanOrder, ingredients, meals, initialized]);
+  }, [items, itemQuantities, mealPlanOrder, ingredients, meals, initialized, calculateTotalNutrition]);
 
   // Helper to check if meal plan state has changed
   const hasMealPlanChanged = useCallback(() => {
@@ -492,79 +557,18 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
   ]);
 
   // Handle quantity changes for items
-  const handleQuantityChange = (itemId: string, quantity: number) => {
+  const handleQuantityChange = useCallback((itemId: string, quantity: number) => {
     setItemQuantities((prev) => ({
       ...prev,
       [itemId]: quantity,
     }));
-
-    // Recalculate nutrition after quantity change
-    calculateTotalNutrition();
-  };
-
-  // Calculate total calories and macros for a group
-  const calculateGroupNutrition = (groupId: string) => {
-    return (
-      items[groupId]?.reduce(
-        (total, itemId) => {
-          const item = itemsData[itemId];
-          const quantity = itemQuantities[itemId] || 1;
-
-          if (item) {
-            return {
-              calories:
-                total.calories + (item.macros?.calories || 0) * quantity,
-              protein: total.protein + (item.macros?.protein || 0) * quantity,
-              carbs: total.carbs + (item.macros?.carbs || 0) * quantity,
-              fat: total.fat + (item.macros?.fat || 0) * quantity,
-            };
-          }
-          return total;
-        },
-        { calories: 0, protein: 0, carbs: 0, fat: 0 },
-      ) || { calories: 0, protein: 0, carbs: 0, fat: 0 }
-    );
-  };
-
-  // Calculate total price for a group
-  const calculateGroupPrice = (groupId: string) => {
-    return (
-      items[groupId]?.reduce((total, itemId) => {
-        const item = itemsData[itemId];
-        const quantity = itemQuantities[itemId] || 1;
-        return total + (item?.price || 0) * quantity;
-      }, 0) || 0
-    );
-  };
-
-  // Calculate total nutrition for all meal plan groups
-  const calculateTotalNutrition = () => {
-    let totalCalories = 0;
-    let totalProtein = 0;
-    let totalCarbs = 0;
-    let totalFat = 0;
-    let totalPrice = 0;
-
-    mealPlanOrder.forEach((groupId) => {
-      const nutrition = calculateGroupNutrition(groupId);
-      totalCalories += nutrition.calories;
-      totalProtein += nutrition.protein;
-      totalCarbs += nutrition.carbs;
-      totalFat += nutrition.fat;
-      totalPrice += calculateGroupPrice(groupId);
-    });
-
-    setTotalNutrition({
-      calories: totalCalories,
-      protein: totalProtein,
-      carbs: totalCarbs,
-      fat: totalFat,
-      price: totalPrice,
-    });
-  };
+    
+    // Mark for nutrition update
+    needsNutritionUpdate.current = true;
+  }, []);
 
   // Format column title with nutritional info
-  const getColumnTitle = (columnId: string) => {
+  const getColumnTitle = useCallback((columnId: string) => {
     if (!columns[columnId]) return columnId;
 
     // For meal plan columns, show calories
@@ -575,10 +579,10 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
 
     // For stores, just use the title
     return columns[columnId].title;
-  };
+  }, [columns, calculateGroupNutrition]);
 
   // Add a new meal plan group
-  const addNewGroup = () => {
+  const addNewGroup = useCallback(() => {
     const groupId = `group-${Date.now()}`;
 
     // Add empty list to items state
@@ -600,10 +604,10 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
 
     // Add to meal plan order
     setMealPlanOrder((prev) => [...prev, groupId]);
-  };
+  }, []);
 
   // Remove a meal plan group
-  const removeGroup = (groupId: string) => {
+  const removeGroup = useCallback((groupId: string) => {
     // Get the items from the group being deleted
     const groupItems = [...(items[groupId] || [])];
 
@@ -633,10 +637,13 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
 
     // Remove from meal plan order
     setMealPlanOrder((prev) => prev.filter((id) => id !== groupId));
-  };
+    
+    // Mark for nutrition update
+    needsNutritionUpdate.current = true;
+  }, [items, itemsData, columns]);
 
   // Handle group name change
-  const handleGroupNameChange = (groupId: string, newName: string) => {
+  const handleGroupNameChange = useCallback((groupId: string, newName: string) => {
     setColumns((prev) => ({
       ...prev,
       [groupId]: {
@@ -644,10 +651,10 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
         title: newName,
       },
     }));
-  };
+  }, []);
 
   // Convert the drag-drop state back to the MealPlan format expected by the API
-  const saveMealPlan = () => {
+  const saveMealPlan = useCallback(() => {
     // Update the current meal plan name from the text field
     currentMealPlan.name = mealPlanName;
 
@@ -684,7 +691,44 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
 
     // Call the parent onSubmit to save the meal plan
     onSubmit(true);
-  };
+  }, [currentMealPlan, mealPlanName, mealPlanOrder, columns, items, itemsData, itemQuantities, totalNutrition, onSubmit]);
+
+  // Handler for drag end - only update state when drag is complete
+  const handleDragOver = useCallback((event: any) => {
+    const { source, target } = event.operation;
+    
+    // No target means the drop was canceled
+    if (!source || !target) return;
+    
+    // Handle column reordering if the source is a column
+    if (source.type === "column") {
+      // Only allow reordering non-fixed columns
+      const columnId = source.id;
+      if (!columns[columnId]?.isFixed) {
+        setMealPlanOrder((order) => move(order, event));
+        needsNutritionUpdate.current = true; // Mark for nutrition update
+      }
+      return;
+    }
+    
+    // Handle item movement
+    if (source.type === "ingredient" || source.type === "meal") {
+      let targetColumnID = target.id;
+      
+      // Get the correct target column ID from the sortable group if needed
+      if (target.sortable?.group && target.sortable?.droppable?.type !== "column") {
+        targetColumnID = target.sortable.group;
+      }
+      
+      // Prevent wrong type movements
+      if (source.type === "ingredient" && targetColumnID === "meals-store") return;
+      if (source.type === "meal" && targetColumnID === "ingredients-store") return;
+      
+      // Only update state once when drag is complete
+      setItems(items => move(items, event));
+      needsNutritionUpdate.current = true; // Mark for nutrition update
+    }
+  }, [columns, items]);
 
   return (
     <>
@@ -930,24 +974,8 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
               <CircularProgress />
             </Box>
           ) : (
-            <DragDropProvider
-              onDragOver={(event) => {
-                const { source } = event.operation;
-
-                // Handle column reordering if the source is a column
-                if (source && source.type === "column") {
-                  // Only allow reordering non-fixed columns
-                  const columnId = source.id;
-                  if (!columns[columnId]?.isFixed) {
-                    setMealPlanOrder((order) => move(order, event));
-                    return;
-                  }
-                  return;
-                }
-
-                // Handle item reordering
-                setItems((items) => move(items, event));
-              }}
+            <DragDropProvider 
+              onDragOver={handleDragOver}
             >
               <Box
                 sx={{

@@ -62,8 +62,8 @@ export function Item({
   const { ref, isDragging } = useSortable({
     id,
     index,
-    type: "item",
-    accept: "item",
+    type: type,
+    accept: ["ingredient", "meal", "item"],
     group: column,
   });
 
