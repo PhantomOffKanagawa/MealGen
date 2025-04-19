@@ -258,83 +258,116 @@ const DragDropMealPlanForm: React.FC<DragDropMealPlanFormProps> = ({
 
     // Update the previouslyOpen tracking variable
     setPreviouslyOpen(open);
-  }, [open, currentMealPlan, defaultColumns, defaultItems, initialized, updatePending]);
-
-  // Listen for new ingredients coming from websocket updates - with reduced dependencies
+  }, [open, currentMealPlan, defaultColumns, defaultItems, initialized, updatePending]);  // Listen for new ingredients and ingredient updates from websocket updates - with minimal dependencies
   useEffect(() => {
     if (!initialized || !open) return;
     
-    // Get all ingredient IDs currently in meal plan groups
-    const inUseIngredientIds = new Set<string>();
-    mealPlanOrder.forEach((groupId) => {
-      if (items[groupId]) {
-        items[groupId].forEach((itemId) => {
-          if (itemsData[itemId]?.type === "ingredient") {
-            inUseIngredientIds.add(itemId);
-          }
-        });
-      }
-    });
-
-    // Get current ingredient store IDs
-    const currentIngredientStoreIds = new Set(
-      items["ingredients-store"] || [],
-    );
-
-    // Find new ingredient IDs that aren't in the store or in use
-    const newIngredientIds = ingredientItems
-      .map((ing) => ing.id)
-      .filter(
-        (id) =>
-          !currentIngredientStoreIds.has(id) && !inUseIngredientIds.has(id),
+    // Use a set of ingredient IDs for efficient lookups
+    const incomingIds = new Set(ingredientItems.map(ing => ing.id));
+    
+    // Only update if the component is fully initialized
+    setItems((prev) => {
+      // Get all ingredient IDs currently in meal plan groups
+      const inUseIngredientIds = new Set<string>();
+      mealPlanOrder.forEach((groupId) => {
+        if (prev[groupId]) {
+          prev[groupId].forEach((itemId) => {
+            if (itemsData[itemId]?.type === "ingredient") {
+              inUseIngredientIds.add(itemId);
+            }
+          });
+        }
+      });
+      
+      // Check current store contents to prevent duplicates
+      const currentStoreIds = new Set(prev["ingredients-store"]);
+      
+      // Find truly new ingredients that aren't in the store or meal plan
+      const newIngredientIds = Array.from(incomingIds).filter(
+        id => !currentStoreIds.has(id) && !inUseIngredientIds.has(id)
       );
-
-    // If we have new ingredients, update the ingredients store
-    if (newIngredientIds.length > 0) {
-      console.log("Adding new ingredients to store:", newIngredientIds);
-      setItems((prev) => ({
-        ...prev,
-        "ingredients-store": [
-          ...prev["ingredients-store"],
-          ...newIngredientIds,
-        ],
-      }));
+      
+      // Only update state if we have new ingredients
+      if (newIngredientIds.length > 0) {
+        console.log("Adding new ingredients to store:", newIngredientIds);
+        needsNutritionUpdate.current = true;
+        return {
+          ...prev,
+          "ingredients-store": [...prev["ingredients-store"], ...newIngredientIds]
+        };
+      }
+      
+      // Return unchanged state if no new ingredients
+      return prev;
+    });
+    
+    // Also check for updates to existing ingredient macros/data
+    // This will mark for nutrition update even if no new items were added
+    const existingItemsChanged = ingredientItems.some(ingredient => {
+      const itemId = ingredient.id;
+      const existingItem = itemsData[itemId];
+      
+      // If item exists and any of its nutritional data has changed
+      if (existingItem && (
+        existingItem.macros?.calories !== ingredient.macros?.calories ||
+        existingItem.macros?.protein !== ingredient.macros?.protein ||
+        existingItem.macros?.carbs !== ingredient.macros?.carbs ||
+        existingItem.macros?.fat !== ingredient.macros?.fat ||
+        existingItem.price !== ingredient.price
+      )) {
+        return true;
+      }
+      return false;
+    });
+      needsNutritionUpdate.current = true;
+    
+    if (existingItemsChanged) {
+      console.log("Ingredient nutrition data changed, scheduling update");
     }
-  }, [ingredients, initialized, open, items, mealPlanOrder, itemsData, ingredientItems]);
-
-  // Listen for new meals coming from websocket updates - with reduced dependencies
+    
+  }, [ingredients, initialized, open, mealPlanOrder, itemsData, ingredientItems]);
+  // Listen for new meals coming from websocket updates - with minimal dependencies
   useEffect(() => {
     if (!initialized || !open) return;
     
-    // Get all meal IDs currently in meal plan groups
-    const inUseMealIds = new Set<string>();
-    mealPlanOrder.forEach((groupId) => {
-      if (items[groupId]) {
-        items[groupId].forEach((itemId) => {
-          if (itemsData[itemId]?.type === "meal") {
-            inUseMealIds.add(itemId);
-          }
-        });
+    // Use a set of meal IDs for efficient lookups
+    const incomingIds = new Set(mealItems.map(meal => meal.id));
+    
+    // Only update if the component is fully initialized
+    setItems((prev) => {
+      // Get all meal IDs currently in meal plan groups
+      const inUseMealIds = new Set<string>();
+      mealPlanOrder.forEach((groupId) => {
+        if (prev[groupId]) {
+          prev[groupId].forEach((itemId) => {
+            if (itemsData[itemId]?.type === "meal") {
+              inUseMealIds.add(itemId);
+            }
+          });
+        }
+      });
+      
+      // Check current store contents to prevent duplicates
+      const currentStoreIds = new Set(prev["meals-store"]);
+      
+      // Find truly new meals that aren't in the store or meal plan
+      const newMealIds = Array.from(incomingIds).filter(
+        id => !currentStoreIds.has(id) && !inUseMealIds.has(id)
+      );
+      
+      // Only update state if we have new meals
+      if (newMealIds.length > 0) {
+        console.log("Adding new meals to store:", newMealIds);
+        return {
+          ...prev,
+          "meals-store": [...prev["meals-store"], ...newMealIds]
+        };
       }
+      
+      // Return unchanged state if no new meals
+      return prev;
     });
-
-    // Get current meal store IDs
-    const currentMealStoreIds = new Set(items["meals-store"] || []);
-
-    // Find new meal IDs that aren't in the store or in use
-    const newMealIds = mealItems
-      .map((meal) => meal.id)
-      .filter((id) => !currentMealStoreIds.has(id) && !inUseMealIds.has(id));
-
-    // If we have new meals, update the meals store
-    if (newMealIds.length > 0) {
-      console.log("Adding new meals to store:", newMealIds);
-      setItems((prev) => ({
-        ...prev,
-        "meals-store": [...prev["meals-store"], ...newMealIds],
-      }));
-    }
-  }, [meals, initialized, open, items, mealPlanOrder, itemsData, mealItems]);
+  }, [meals, initialized, open, mealPlanOrder, itemsData, mealItems]);
 
   // Memoized function to calculate nutrition for a group - prevents recalculation unless dependencies change
   const calculateGroupNutrition = useCallback((groupId: string) => {
