@@ -36,9 +36,9 @@ services:
       - mongodb
     networks:
       - mealgen-network
-    volumes:
-      - ./graduate_backend/src:/app/src
-      - /app/node_modules
+    # volumes:
+    #   - ./graduate_backend/src:/app/src
+    #   - /app/node_modules
 
   # Frontend service (Next.js)
   frontend:
@@ -65,5 +65,6 @@ networks:
   mealgen-network:
     driver: bridge
 
+# To use a docker defined store for mongodb
 # volumes:
 #   mongodb_data:
