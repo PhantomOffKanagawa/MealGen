@@ -43,6 +43,8 @@ export function Column({
   const theme = useTheme();
 
   const isFixedStore = type === "ingredient-store" || type === "meal-store";
+  
+  const [handleRef, setHandleRef] = useState<HTMLElement | null>(null);
 
   const { ref } = useSortable({
     id,
@@ -52,7 +54,7 @@ export function Column({
     // accept: getAcceptedItemTypes(),
     accept: ["ingredient", "meal", "column", "item"],
     // disabled: isFixedStore,
-    handle: isFixedStore ? undefined : null,
+    handle: isFixedStore ? handleRef : null,
   });
 
   const getColumnIcon = () => {
@@ -147,6 +149,9 @@ export function Column({
     >
       {" "}
       <Box
+        ref={(el) => {
+          setHandleRef(el as HTMLElement | null);
+        }}
         sx={{
           bgcolor: getColumnColor(),
           color: "white",
