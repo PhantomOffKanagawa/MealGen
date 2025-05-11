@@ -104,6 +104,7 @@ The easiest way to get cooking is to clone the repository and follow the instruc
 
 ## 🔮 Future Menu Items
 
+- 💣 Data purging of old or innappropriate data for demo (so take-out stays cheap)
 - 🎨 Refactor page renders for a more appetizing visual experience
 - 💄 Implement styling to reduce hand-written CSS (because we prefer our CSS pre-cooked)
 - ⚠️ Enhance error handling and logging on the frontend (for when things get spicy)
