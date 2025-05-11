@@ -2,6 +2,10 @@ const { composeMongoose } = require("graphql-compose-mongoose");
 const { schemaComposer } = require("graphql-compose");
 const customOptions = require("../customOptions");
 const User = require("../../mongodb/UserModel");
+const Ingredient = require("../../mongodb/IngredientModel");
+const Meal = require("../../mongodb/MealModel");
+const MealPlan = require("../../mongodb/MealPlanModel");
+const { createSeedDataForUser } = require("../../utils/seedDatabase");
 
 // Convert Mongoose model to GraphQL TypeComposer
 const UserTC = composeMongoose(User, {
@@ -59,7 +63,6 @@ const UserMutations = {
   userRemoveById: UserTC.mongooseResolvers.removeById(),
   userRemoveOne: UserTC.mongooseResolvers.removeOne(),
   userRemoveMany: UserTC.mongooseResolvers.removeMany(),
-
   // Register new user
   register: {
     type: AuthPayloadTC,
@@ -79,6 +82,15 @@ const UserMutations = {
       // Create new user
       const user = await User.create(args);
       const token = user.generateAuthToken();
+
+      // Create seed data for the new user
+      try {
+        await createSeedDataForUser(user._id);
+        console.log(`Seed data created for new user: ${user.name}`);
+      } catch (error) {
+        console.error('Failed to create seed data for new user:', error);
+        // Don't fail the registration just because seed data creation failed
+      }
 
       return {
         token,

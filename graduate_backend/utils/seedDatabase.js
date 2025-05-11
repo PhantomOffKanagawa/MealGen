@@ -7,6 +7,244 @@ const Meal = require('../mongodb/MealModel');
 const MealPlan = require('../mongodb/MealPlanModel');
 const { mongodb_url, clear_data } = require('./env');
 
+// Common ingredients data that can be used for seeding
+const getCommonIngredients = () => [
+  {
+    name: 'Chicken Breast',
+    quantity: 6,
+    unit: 'oz',
+    macros: { calories: 120, protein: 26, carbs: 0, fat: 3 },
+    price: 1.99
+  },
+  {
+    name: 'Rice',
+    quantity: 1,
+    unit: 'cup',
+    macros: { calories: 200, protein: 4, carbs: 45, fat: 0 },
+    price: 0.5
+  },
+  {
+    name: 'Broccoli',
+    quantity: 1,
+    unit: 'cup',
+    macros: { calories: 55, protein: 3, carbs: 10, fat: 0 },
+    price: 1.5
+  },
+  {
+    name: 'Olive Oil',
+    quantity: 1,
+    unit: 'tbsp',
+    macros: { calories: 120, protein: 0, carbs: 0, fat: 14 },
+    price: 0.3
+  },
+  {
+    name: 'Eggs',
+    quantity: 1,
+    unit: 'unit',
+    macros: { calories: 70, protein: 6, carbs: 0, fat: 5 },
+    price: 0.25
+  },
+  {
+    name: 'Spinach',
+    quantity: 1,
+    unit: 'cup',
+    macros: { calories: 7, protein: 1, carbs: 1, fat: 0 },
+    price: 1.0
+  },
+  {
+    name: 'Salmon',
+    quantity: 1,
+    unit: 'fillet',
+    macros: { calories: 200, protein: 22, carbs: 0, fat: 12 },
+    price: 4.99
+  }
+];
+
+// Create seed data for a single user
+async function createSeedDataForUser(userId) {
+  try {
+    console.log(`Creating seed data for user ${userId}`);
+    
+    // Get common ingredients
+    const commonIngredients = getCommonIngredients();
+    
+    // Create ingredients for the user
+    const createdIngredients = [];
+    for (const ingredient of commonIngredients) {
+      const createdIngredient = await Ingredient.create({
+        ...ingredient,
+        userId
+      });
+      createdIngredients.push(createdIngredient);
+    }
+    
+    // Get references to specific ingredients
+    const chickenIngredient = createdIngredients.find(ing => ing.name === 'Chicken Breast');
+    const riceIngredient = createdIngredients.find(ing => ing.name === 'Rice');
+    const broccoliIngredient = createdIngredients.find(ing => ing.name === 'Broccoli');
+    const oilIngredient = createdIngredients.find(ing => ing.name === 'Olive Oil');
+    const eggIngredient = createdIngredients.find(ing => ing.name === 'Eggs');
+    const spinachIngredient = createdIngredients.find(ing => ing.name === 'Spinach');
+    const salmonIngredient = createdIngredients.find(ing => ing.name === 'Salmon');
+    
+    // Create user's meals
+    const userMeals = [];
+    
+    // Create a chicken and rice meal
+    if (chickenIngredient && riceIngredient && broccoliIngredient && oilIngredient) {
+      const chickenRiceMeal = await Meal.create({
+        userId,
+        name: 'Chicken Rice Bowl',
+        ingredients: [
+          { ingredientId: chickenIngredient._id, quantity: 0.5 },
+          { ingredientId: riceIngredient._id, quantity: 1 },
+          { ingredientId: broccoliIngredient._id, quantity: 1 },
+          { ingredientId: oilIngredient._id, quantity: 0.5 }
+        ],
+        macros: {
+          calories: 120 * 0.5 + 200 * 1 + 55 * 1 + 120 * 0.5,
+          protein: 26 * 0.5 + 4 * 1 + 3 * 1 + 0 * 0.5,
+          carbs: 0 * 0.5 + 45 * 1 + 10 * 1 + 0 * 0.5,
+          fat: 3 * 0.5 + 0 * 1 + 0 * 1 + 14 * 0.5
+        },
+        price: 1.99 * 0.5 + 0.5 * 1 + 1.5 * 1 + 0.3 * 0.5
+      });
+      userMeals.push(chickenRiceMeal);
+    }
+    
+    // Create an egg breakfast
+    if (eggIngredient && spinachIngredient && oilIngredient) {
+      const eggBreakfast = await Meal.create({
+        userId,
+        name: 'Spinach Omelette',
+        ingredients: [
+          { ingredientId: eggIngredient._id, quantity: 2 },
+          { ingredientId: spinachIngredient._id, quantity: 1 },
+          { ingredientId: oilIngredient._id, quantity: 0.5 }
+        ],
+        macros: {
+          calories: 70 * 2 + 7 * 1 + 120 * 0.5,
+          protein: 6 * 2 + 1 * 1 + 0 * 0.5,
+          carbs: 0 * 2 + 1 * 1 + 0 * 0.5,
+          fat: 5 * 2 + 0 * 1 + 14 * 0.5
+        },
+        price: 0.25 * 2 + 1.0 * 1 + 0.3 * 0.5
+      });
+      userMeals.push(eggBreakfast);
+    }
+    
+    // Create a salmon dinner
+    if (salmonIngredient && riceIngredient && broccoliIngredient && oilIngredient) {
+      const salmonDinner = await Meal.create({
+        userId,
+        name: 'Salmon Dinner',
+        ingredients: [
+          { ingredientId: salmonIngredient._id, quantity: 1 },
+          { ingredientId: riceIngredient._id, quantity: 0.5 },
+          { ingredientId: broccoliIngredient._id, quantity: 1 },
+          { ingredientId: oilIngredient._id, quantity: 0.5 }
+        ],
+        macros: {
+          calories: 200 * 1 + 200 * 0.5 + 55 * 1 + 120 * 0.5,
+          protein: 22 * 1 + 4 * 0.5 + 3 * 1 + 0 * 0.5,
+          carbs: 0 * 1 + 45 * 0.5 + 10 * 1 + 0 * 0.5,
+          fat: 12 * 1 + 0 * 0.5 + 0 * 1 + 14 * 0.5
+        },
+        price: 4.99 * 1 + 0.5 * 0.5 + 1.5 * 1 + 0.3 * 0.5
+      });
+      userMeals.push(salmonDinner);
+    }
+    
+    // Create meal plans
+    if (userMeals.length > 0 && createdIngredients.length > 0) {
+      // Create a weekly meal plan
+      const mealItems = userMeals.map(meal => ({
+        type: 'meal',
+        itemId: meal._id,
+        quantity: 1,
+        group: 'Meals'
+      }));
+
+      const ingredientItems = [
+        {
+          type: 'ingredient',
+          itemId: chickenIngredient._id,
+          quantity: 2,
+          group: 'Proteins'
+        },
+        {
+          type: 'ingredient',
+          itemId: riceIngredient._id,
+          quantity: 3,
+          group: 'Carbs'
+        },
+        {
+          type: 'ingredient',
+          itemId: broccoliIngredient._id,
+          quantity: 2,
+          group: 'Vegetables'
+        }
+      ];
+
+      await MealPlan.create({
+        userId,
+        name: 'Weekly Meal Plan',
+        items: [...mealItems, ...ingredientItems],
+        macros: {
+          calories: 1947,
+          protein: 130,
+          carbs: 243.5,
+          fat: 50.5
+        },
+        price: 20.16
+      });
+
+      // Create a weight loss meal plan
+      const spinachOmelette = userMeals.find(m => m.name === 'Spinach Omelette');
+      if (spinachOmelette) {
+        await MealPlan.create({
+          userId,
+          name: 'Weight Loss Plan',
+          items: [
+            {
+              type: 'meal',
+              itemId: spinachOmelette._id,
+              quantity: 1,
+              group: 'Breakfast'
+            },
+            {
+              type: 'ingredient',
+              itemId: salmonIngredient._id,
+              quantity: 1,
+              group: 'Dinner'
+            },
+            {
+              type: 'ingredient',
+              itemId: spinachIngredient._id,
+              quantity: 2,
+              group: 'Vegetables'
+            }
+          ],
+          macros: {
+            calories: 421,
+            protein: 130,
+            carbs: 3,
+            fat: 29
+          },
+          price: 8.64
+        });
+      }
+    }
+    
+    console.log(`Seed data created for user ${userId}`);
+    return true;
+    
+  } catch (error) {
+    console.error(`Error creating seed data for user ${userId}:`, error);
+    return false;
+  }
+}
+
 async function seedDatabase() {
   try {
     // Connect to MongoDB
@@ -48,240 +286,14 @@ async function seedDatabase() {
         password,
         role: 'admin'
       }
-    ]);
+    ]);    console.log('Created users:', users.map(user => user.name));
 
-    console.log('Created users:', users.map(user => user.name));
-
-    // Create ingredients for each user
-    const commonIngredients = [
-      {
-        name: 'Chicken Breast',
-        quantity: 6,
-        unit: 'oz',
-        macros: { calories: 120, protein: 26, carbs: 0, fat: 3 },
-        price: 1.99
-      },
-      {
-        name: 'Rice',
-        quantity: 1,
-        unit: 'cup',
-        macros: { calories: 200, protein: 4, carbs: 45, fat: 0 },
-        price: 0.5
-      },
-      {
-        name: 'Broccoli',
-        quantity: 1,
-        unit: 'cup',
-        macros: { calories: 55, protein: 3, carbs: 10, fat: 0 },
-        price: 1.5
-      },
-      {
-        name: 'Olive Oil',
-        quantity: 1,
-        unit: 'tbsp',
-        macros: { calories: 120, protein: 0, carbs: 0, fat: 14 },
-        price: 0.3
-      },
-      {
-        name: 'Eggs',
-        quantity: 1,
-        unit: 'unit',
-        macros: { calories: 70, protein: 6, carbs: 0, fat: 5 },
-        price: 0.25
-      },
-      {
-        name: 'Spinach',
-        quantity: 1,
-        unit: 'cup',
-        macros: { calories: 7, protein: 1, carbs: 1, fat: 0 },
-        price: 1.0
-      },
-      {
-        name: 'Salmon',
-        quantity: 1,
-        unit: 'fillet',
-        macros: { calories: 200, protein: 22, carbs: 0, fat: 12 },
-        price: 4.99
-      }
-    ];
-
-    const ingredients = [];
-
-    // Create ingredients for each user
+    // Create seed data for each user
     for (const user of users) {
-      for (const ingredient of commonIngredients) {
-        const createdIngredient = await Ingredient.create({
-          ...ingredient,
-          userId: user._id
-        });
-        ingredients.push(createdIngredient);
-      }
+      await createSeedDataForUser(user._id);
     }
-
-    console.log(`Created ${ingredients.length} ingredients`);
-
-    // Create meals for each user
-    for (const user of users) {
-      const userIngredients = ingredients.filter(ing => ing.userId.toString() === user._id.toString());
-
-      // Create a chicken and rice meal
-      const chickenIngredient = userIngredients.find(ing => ing.name === 'Chicken Breast');
-      const riceIngredient = userIngredients.find(ing => ing.name === 'Rice');
-      const broccoliIngredient = userIngredients.find(ing => ing.name === 'Broccoli');
-      const oilIngredient = userIngredients.find(ing => ing.name === 'Olive Oil');
-
-      if (chickenIngredient && riceIngredient && broccoliIngredient && oilIngredient) {
-        await Meal.create({
-          userId: user._id,
-          name: 'Chicken Rice Bowl',
-          ingredients: [
-            { ingredientId: chickenIngredient._id, quantity: 0.5 },
-            { ingredientId: riceIngredient._id, quantity: 1 },
-            { ingredientId: broccoliIngredient._id, quantity: 1 },
-            { ingredientId: oilIngredient._id, quantity: 0.5 }
-          ],
-          macros: {
-            calories: 120 * 0.5 + 200 * 1 + 55 * 1 + 120 * 0.5,
-            protein: 26 * 0.5 + 4 * 1 + 3 * 1 + 0 * 0.5,
-            carbs: 0 * 0.5 + 45 * 1 + 10 * 1 + 0 * 0.5,
-            fat: 3 * 0.5 + 0 * 1 + 0 * 1 + 14 * 0.5
-          },
-          price: 1.99 * 0.5 + 0.5 * 1 + 1.5 * 1 + 0.3 * 0.5
-        });
-      }
-
-      // Create an egg breakfast
-      const eggIngredient = userIngredients.find(ing => ing.name === 'Eggs');
-      const spinachIngredient = userIngredients.find(ing => ing.name === 'Spinach');
-      
-      if (eggIngredient && spinachIngredient && oilIngredient) {
-        await Meal.create({
-          userId: user._id,
-          name: 'Spinach Omelette',
-          ingredients: [
-            { ingredientId: eggIngredient._id, quantity: 2 },
-            { ingredientId: spinachIngredient._id, quantity: 1 },
-            { ingredientId: oilIngredient._id, quantity: 0.5 }
-          ],
-          macros: {
-            calories: 70 * 2 + 7 * 1 + 120 * 0.5,
-            protein: 6 * 2 + 1 * 1 + 0 * 0.5,
-            carbs: 0 * 2 + 1 * 1 + 0 * 0.5,
-            fat: 5 * 2 + 0 * 1 + 14 * 0.5
-          },
-          price: 0.25 * 2 + 1.0 * 1 + 0.3 * 0.5
-        });
-      }
-
-      // Create a salmon dinner
-      const salmonIngredient = userIngredients.find(ing => ing.name === 'Salmon');
-      
-      if (salmonIngredient && riceIngredient && broccoliIngredient && oilIngredient) {
-        await Meal.create({
-          userId: user._id,
-          name: 'Salmon Dinner',
-          ingredients: [
-            { ingredientId: salmonIngredient._id, quantity: 1 },
-            { ingredientId: riceIngredient._id, quantity: 0.5 },
-            { ingredientId: broccoliIngredient._id, quantity: 1 },
-            { ingredientId: oilIngredient._id, quantity: 0.5 }
-          ],
-          macros: {
-            calories: 200 * 1 + 200 * 0.5 + 55 * 1 + 120 * 0.5,
-            protein: 22 * 1 + 4 * 0.5 + 3 * 1 + 0 * 0.5,
-            carbs: 0 * 1 + 45 * 0.5 + 10 * 1 + 0 * 0.5,
-            fat: 12 * 1 + 0 * 0.5 + 0 * 1 + 14 * 0.5
-          },
-          price: 4.99 * 1 + 0.5 * 0.5 + 1.5 * 1 + 0.3 * 0.5
-        });
-      }
-    }
-
-    console.log('Created meals');
-
-    // Create meal plans
-    for (const user of users) {
-      // Get user's meals
-      const userMeals = await Meal.find({ userId: user._id });
-      
-      // Get user's ingredients
-      const userIngredients = await Ingredient.find({ userId: user._id });
-
-      if (userMeals.length > 0 && userIngredients.length > 0) {        const mealItems = userMeals.map(meal => ({
-          type: 'meal',
-          itemId: meal._id,
-          quantity: 1,
-          group: 'Meals'
-        }));
-
-        const ingredientItems = [
-          {
-            type: 'ingredient',
-            itemId: userIngredients.find(i => i.name === 'Chicken Breast')._id,
-            quantity: 2,
-            group: 'Proteins'
-          },
-          {
-            type: 'ingredient',
-            itemId: userIngredients.find(i => i.name === 'Rice')._id,
-            quantity: 3,
-            group: 'Carbs'
-          },
-          {
-            type: 'ingredient',
-            itemId: userIngredients.find(i => i.name === 'Broccoli')._id,
-            quantity: 2,
-            group: 'Vegetables'
-          }
-        ];
-
-        await MealPlan.create({
-          userId: user._id,
-          name: 'Weekly Meal Plan',
-          items: [...mealItems, ...ingredientItems],
-          macros: {
-            calories: 1947,
-            protein: 130,
-            carbs: 243.5,
-            fat: 50.5
-          },
-          price: 20.16
-        });
-
-        // Create a second meal plan
-        await MealPlan.create({
-          userId: user._id,
-          name: 'Weight Loss Plan',
-          items: [
-            {
-              type: 'meal',
-              itemId: userMeals.find(m => m.name === 'Spinach Omelette')._id,
-              quantity: 1,
-              group: 'Breakfast'
-            },
-            {
-              type: 'ingredient',
-              itemId: userIngredients.find(i => i.name === 'Salmon')._id,
-              quantity: 1,
-              group: 'Dinner'
-            },
-            {
-              type: 'ingredient',
-              itemId: userIngredients.find(i => i.name === 'Spinach')._id,
-              quantity: 2,
-              group: 'Vegetables'
-            }
-          ],
-          macros: {
-            calories: 421,
-            protein: 130,
-            carbs: 3,
-            fat: 29
-          },
-          price: 8.64
-        });
-      }
-    }
+    
+    console.log('Created all seed data for users');
 
     console.log('Created meal plans');
     console.log('Database seeded successfully!');
@@ -307,4 +319,8 @@ if (require.main === module) {
     });
 }
 
-module.exports = seedDatabase;
+module.exports = {
+  seedDatabase,
+  createSeedDataForUser,
+  getCommonIngredients
+};
