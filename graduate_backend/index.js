@@ -70,9 +70,13 @@ const authenticateUser = async (req) => {
 // Start Apollo Server with Express
 async function startServer() {
   await mongoose.connect(mongodb_url);
-  console.log(
-    `🌿 MongoDB Connected from ${mongodb_url.slice(0, 35)}${mongodb_url.length > 35 ? "..." : ""}`,
-  );
+  if (node_env === "development") {
+    console.log(
+      `🌿 MongoDB Connected from ${mongodb_url.slice(0, 35)}${mongodb_url.length > 35 ? "..." : ""}`,
+    );
+  } else {
+    console.log("🌿 MongoDB Connected")
+  }
 
   const server = new ApolloServer({
     schema: graphqlSchema,
